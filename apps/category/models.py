@@ -56,11 +56,7 @@ class Category(models.Model):
         null=True,
         upload_to=category_image_file_path,
     )
-    gallery = models.ManyToManyField(
-        "CategoryImages",
-        related_name="categories",
-        blank=True,
-    )
+
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

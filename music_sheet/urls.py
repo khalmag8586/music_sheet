@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
 from django.conf.urls.i18n import i18n_patterns
-from f_gardens.util import CheckFieldValueExistenceView
+from music_sheet.util import CheckFieldValueExistenceView
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
@@ -25,9 +25,8 @@ urlpatterns += i18n_patterns(
     path('api/category/',include('apps.category.urls')),
     path('api/product/',include('apps.product.urls')),
     path('api/about_us/',include('apps.about_us.urls')),
-    path('api/project/',include('apps.project.urls')),
-    path('api/partner/',include('apps.partner.urls')),
     path('api/contact_us/',include('apps.contact_us.urls')),
+    path('api/customer/',include('apps.customer.urls')),
 )
 
 if settings.DEBUG:

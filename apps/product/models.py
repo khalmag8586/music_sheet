@@ -33,7 +33,6 @@ class Product(models.Model):
     slug = models.SlugField(max_length=255, allow_unicode=True, unique=True)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    # sku = models.CharField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -53,7 +52,6 @@ class Product(models.Model):
         null=True,
     )
     image = models.ImageField(blank=True, null=True, upload_to=product_image_file_path)
-    gallery = models.ManyToManyField("Images", related_name="products", blank=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

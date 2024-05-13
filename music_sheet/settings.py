@@ -1,5 +1,3 @@
-
-
 from pathlib import Path
 import os
 from datetime import datetime, timedelta
@@ -46,10 +44,9 @@ INSTALLED_APPS = [
     "apps.category",
     "apps.product",
     "apps.about_us",
-    "apps.project",
-    "apps.partner",
     "apps.contact_us",
-
+    "apps.customer",
+    # "apps.section",
 ]
 
 # email settings for mailhog
@@ -137,10 +134,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "f_gardens.middlewares.CustomErrorMiddleware",#added by me
+    # "music_sheet.middlewares.CustomErrorMiddleware",#added by me
 ]
 
-ROOT_URLCONF = "f_gardens.urls"
+ROOT_URLCONF = "music_sheet.urls"
 
 TEMPLATES = [
     {
@@ -158,16 +155,16 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "f_gardens.wsgi.application"
+WSGI_APPLICATION = "music_sheet.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 # DATABASES = {

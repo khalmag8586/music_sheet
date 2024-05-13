@@ -40,10 +40,7 @@ class Service(models.Model):
         null=True,
         upload_to=service_image_file_path,
     )
-    gallery =models.ManyToManyField(
-        "ServiceImages",
-        related_name="services",
-        blank=True,)
+
     def save (self,*args,**kwargs):
         super().save(*args, **kwargs)
         if self.image:
