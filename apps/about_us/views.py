@@ -17,12 +17,12 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from apps.about_us.models import AboutUs
 from apps.about_us.serializers import AboutUsSerializer
-
+from music_sheet.custom_permissions import CustomerPermission
 
 class AboutUsCreateView(generics.CreateAPIView):
     serializer_class = AboutUsSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def perform_create(self, serializer):
         serializer.save(
@@ -71,7 +71,7 @@ class AboutUsRetrieveView(generics.RetrieveAPIView):
 class AboutUsUpdateView(generics.UpdateAPIView):
     serializer_class = AboutUsSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
     lookup_field = "id"
 
     def get_object(self):
@@ -96,7 +96,7 @@ class AboutUsUpdateView(generics.UpdateAPIView):
 
 class AboutUsDeleteView(generics.DestroyAPIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def delete(self, request, *args, **kwargs):
         aboutUs_ids = request.data.get("aboutUs_id", [])
@@ -143,7 +143,7 @@ class DownloadFileView(APIView):
 class UploadFileView(APIView):
     parser_classes = [MultiPartParser]
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def post(self, request, format=None):
         uploaded_file = request.FILES.get("file")

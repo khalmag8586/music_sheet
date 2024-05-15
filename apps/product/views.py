@@ -23,6 +23,7 @@ from apps.product.serializers import (
     ProductCategoryBulkSerializer,
 )
 from music_sheet.pagination import StandardResultsSetPagination
+from music_sheet.custom_permissions import CustomerPermission
 
 from apps.category.models import Category
 
@@ -31,7 +32,7 @@ from apps.category.models import Category
 class ProductCreateView(generics.CreateAPIView):
     serializer_class = ProductSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
@@ -84,7 +85,7 @@ class ProductCreateView(generics.CreateAPIView):
 class ProductCategoryBulkCreateView(generics.CreateAPIView):
     serializer_class = ProductCategoryBulkSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -109,7 +110,7 @@ class ProductCategoryBulkCreateView(generics.CreateAPIView):
 class ProductCategoryBulkRemoveView(generics.CreateAPIView):
     serializer_class = ProductCategoryBulkSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -132,7 +133,7 @@ class ProductCategoryBulkRemoveView(generics.CreateAPIView):
 class ProductCategoryBulkUpdateView(generics.UpdateAPIView):
     serializer_class = ProductCategoryBulkSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def patch(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -170,7 +171,7 @@ class DeletedProductListView(generics.ListAPIView):
     queryset = Product.objects.filter(is_deleted=True)
     serializer_class = ProductSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name", "name_ar", "description", "slug"]
@@ -195,7 +196,7 @@ class ProductByCategoryView(generics.ListAPIView):
 class ProductRetrieveView(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
     lookup_field = "id"
 
     def get_object(self):
@@ -208,7 +209,7 @@ class ProductActiveListView(generics.ListAPIView):
     queryset = Product.objects.filter(is_active=True, is_deleted=False)
     serializer_class = ProductSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name", "description", "sku", "slug"]
@@ -218,7 +219,7 @@ class ProductActiveListView(generics.ListAPIView):
 class ProductChangeActiveView(generics.UpdateAPIView):
     serializer_class = ProductActiveSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
@@ -249,7 +250,7 @@ class ProductUpdateView(generics.UpdateAPIView):
     serializer_class = ProductSerializer
     lookup_field = "id"
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def get_object(self):
         product_id = self.request.query_params.get("product_id")
@@ -274,7 +275,7 @@ class ProductUpdateView(generics.UpdateAPIView):
 class ProductImagesUpdateView(generics.UpdateAPIView):
     serializer_class = ProductImageSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
     queryset = Images.objects.all()
 
     def perform_update(self, serializer):
@@ -311,7 +312,7 @@ class ProductImagesUpdateView(generics.UpdateAPIView):
 class ProductImagesDeleteView(generics.DestroyAPIView):
     serializer_class = ProductImageSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
     queryset = Images.objects.all()
 
     def delete(self, request, *args, **kwargs):
@@ -328,7 +329,7 @@ class ProductImagesDeleteView(generics.DestroyAPIView):
 class ProductDeleteTemporaryView(generics.UpdateAPIView):
     serializer_class = ProductDeleteSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
@@ -374,7 +375,7 @@ class ProductRestoreView(generics.RetrieveUpdateAPIView):
 
     serializer_class = ProductDeleteSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def update(self, request, *args, **kwargs):
         product_ids = request.data.get("product_id", [])
@@ -412,7 +413,7 @@ class ProductRestoreView(generics.RetrieveUpdateAPIView):
 
 class ProductDeleteView(generics.DestroyAPIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def delete(self, request, *args, **kwargs):
         product_ids = request.data.get("product_id", [])
@@ -431,4 +432,4 @@ class ProductDialogView(generics.ListAPIView):
     queryset = Product.objects.filter(is_deleted=False)
     serializer_class = ProductDialogSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]

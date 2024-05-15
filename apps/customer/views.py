@@ -31,7 +31,7 @@ from apps.customer.serializers import CustomerSerializer
 from music_sheet.pagination import StandardResultsSetPagination
 
 
-class LoginView(APIView):
+class CustomerLoginView(APIView):
     # Primary login view
     authentication_classes = [JWTAuthentication]
 
@@ -48,10 +48,7 @@ class LoginView(APIView):
             raise AuthenticationFailed(
                 _("Email or phone number or password is invalid")
             )
-        if customer.is_staff == False:
-            raise AuthenticationFailed(
-                _("Email or phone number or password is invalid!!!")
-            )
+
         if not customer.is_active:
             raise AuthenticationFailed(_("User account is inactive"))
         if customer.is_deleted == True:
@@ -81,8 +78,7 @@ class LoginView(APIView):
 
 class CreateCustomerView(generics.CreateAPIView):
     serializer_class = CustomerSerializer
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    
 
     def perform_create(self, serializer):
         # Capitalize the user's name before saving
@@ -101,11 +97,14 @@ class CreateCustomerView(generics.CreateAPIView):
         )
 
 
+from music_sheet.custom_permissions import CustomerPermission
+
+
 class CustomerListView(generics.ListAPIView):
     queryset = Customer.objects.filter(is_deleted=False, is_customer=True)
     serializer_class = CustomerSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name", "name_ar", "mobile_number", "email"]

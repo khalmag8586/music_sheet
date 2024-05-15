@@ -26,13 +26,13 @@ from apps.category.serializers import (
 from apps.category.filters import CategoryFilter
 
 from music_sheet.pagination import StandardResultsSetPagination
-
+from music_sheet.custom_permissions import CustomerPermission
 
 # category Views
 class CategoryCreateView(generics.CreateAPIView):
     serializer_class = CategorySerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
@@ -75,7 +75,7 @@ class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.filter(is_deleted=False)
     serializer_class = CategorySerializer
     # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CategoryFilter
@@ -87,7 +87,7 @@ class DeletedCategoryListView(generics.ListAPIView):
     queryset = Category.objects.filter(is_deleted=True)
     serializer_class = CategorySerializer
     # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CategoryFilter
@@ -100,7 +100,7 @@ class CategoryRetrieveView(generics.RetrieveAPIView):
     serializer_class = CategorySerializer
     lookup_field = "id"  # Use 'id' as the lookup field
     # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = [CustomerPermission]
 
     def get_object(self):
         category_id = self.request.query_params.get("category_id")
@@ -111,7 +111,7 @@ class CategoryRetrieveView(generics.RetrieveAPIView):
 class ChildrenCategoriesView(generics.ListAPIView):
     serializer_class = NestedCategorySerializer  # Use your Category serializer
     # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
@@ -133,7 +133,7 @@ class ActiveCategoryListView(generics.ListAPIView):
     queryset = Category.objects.filter(is_deleted=False, is_active=True)
     serializer_class = CategorySerializer
     # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CategoryFilter
@@ -144,7 +144,7 @@ class ActiveCategoryListView(generics.ListAPIView):
 class CategoryChangeActiveView(generics.UpdateAPIView):
     serializer_class = CategoryActiveSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
@@ -176,7 +176,7 @@ class CategoryUpdateView(generics.UpdateAPIView):
     serializer_class = CategorySerializer
     lookup_field = "category_id"
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def get_object(self):
         category_id = self.request.query_params.get("category_id")
@@ -201,7 +201,7 @@ class CategoryUpdateView(generics.UpdateAPIView):
 class CategoryImagesUpdateView(generics.UpdateAPIView):
     serializer_class = CategoryImageSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
     queryset = CategoryImages.objects.all()
 
     def perform_update(self, serializer):
@@ -238,7 +238,7 @@ class CategoryImagesUpdateView(generics.UpdateAPIView):
 class CategoryImagesDeleteView(generics.DestroyAPIView):
     serializer_class = CategoryImageSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
     queryset = CategoryImages.objects.all()
 
     def delete(self, request, *args, **kwargs):
@@ -255,7 +255,7 @@ class CategoryImagesDeleteView(generics.DestroyAPIView):
 class CategoryDeleteTemporaryView(generics.UpdateAPIView):
     serializer_class = CategoryDeleteSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
@@ -301,7 +301,7 @@ class CategoryRestoreView(generics.RetrieveUpdateAPIView):
 
     serializer_class = CategoryDeleteSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def update(self, request, *args, **kwargs):
         category_ids = request.data.get("category_id", [])
@@ -339,7 +339,7 @@ class CategoryRestoreView(generics.RetrieveUpdateAPIView):
 
 class CategoryDeleteView(generics.DestroyAPIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomerPermission]
 
     def delete(self, request, *args, **kwargs):
         category_ids = request.data.get("category_id", [])
@@ -358,11 +358,11 @@ class CategoryDialogView(generics.ListAPIView):
     queryset = Category.objects.filter(is_deleted=False)
     serializer_class = CategoryDialogSerializer
     # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = [CustomerPermission]
 
 
 class ParentCategoryDialog(generics.ListAPIView):
     queryset = Category.objects.filter(parent__isnull=True, is_deleted=False)
     serializer_class = CategoryDialogSerializer
     # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = [CustomerPermission]

@@ -41,12 +41,11 @@ from user.filters import UserFilter
 
 from music_sheet.pagination import StandardResultsSetPagination
 
-
+from music_sheet.custom_permissions import CustomerPermission
 # User login view
 class LoginView(APIView):
     # Primary login view
     authentication_classes = [JWTAuthentication]
-
     def post(self, request):
         identifier = request.data.get("identifier")  # Field for email or phone number
         password = request.data.get("password")
@@ -98,7 +97,7 @@ class LoginView(APIView):
 class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def perform_create(self, serializer):
         # Capitalize the user's name before saving
@@ -117,10 +116,12 @@ class CreateUserView(generics.CreateAPIView):
 
 
 class UserListView(generics.ListAPIView):
-    queryset = User.objects.filter(is_deleted=False, is_superuser=False)
+    queryset = User.objects.filter(is_deleted=False, is_superuser=False,is_staff=True)
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
+    permission_classes = [CustomerPermission]
+
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = UserFilter
@@ -132,7 +133,7 @@ class DeletedUserView(generics.ListAPIView):
     queryset = User.objects.filter(is_deleted=True)
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = UserFilter
@@ -143,7 +144,7 @@ class DeletedUserView(generics.ListAPIView):
 class UserRetrieveView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
     lookup_field = "id"
 
     def get_queryset(self):
@@ -158,7 +159,7 @@ class UserRetrieveView(generics.RetrieveAPIView):
 class UploadUserPhotoView(generics.UpdateAPIView):
     serializer_class = UserImageSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
@@ -194,7 +195,7 @@ class UploadUserPhotoView(generics.UpdateAPIView):
 class UploadUserCoverView(generics.UpdateAPIView):
     serializer_class = UserCoverSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
@@ -229,7 +230,7 @@ class UploadUserCoverView(generics.UpdateAPIView):
 class ManagerUserView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def get_object(self):
         return self.request.user
@@ -256,7 +257,7 @@ class ManagerUserView(generics.RetrieveUpdateAPIView):
 class UserDeleteTemporaryView(generics.UpdateAPIView):
     serializer_class = UserDeleteSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def update(self, request, *args, **kwargs):
         user_ids = request.data.get("user_id", [])
@@ -294,7 +295,7 @@ class UserRestoreView(generics.RetrieveUpdateAPIView):
 
     serializer_class = UserDeleteSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def update(self, request, *args, **kwargs):
         user_ids = request.data.get("user_id", [])
@@ -327,7 +328,7 @@ class UserRestoreView(generics.RetrieveUpdateAPIView):
 class UserUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
     lookup_field = "id"
 
     def get_object(self):
@@ -349,7 +350,7 @@ class UserUpdateView(generics.RetrieveUpdateAPIView):
 
 class UserDeleteView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def delete(self, request, format=None):
         data = JSONParser().parse(request)
@@ -388,12 +389,12 @@ class UserDialogView(generics.ListAPIView):
     serializer_class = UserDialogSerializer
     queryset = User.objects.filter(is_deleted=False, is_superuser=False)
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
 
 class UserGenderDialogView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def get(self, request, *args, **kwargs):
         # Define the gender choices here
@@ -409,7 +410,7 @@ class UserGenderDialogView(APIView):
 # Exporting user model
 class ExportUsersToCSV(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [CustomerPermission]
 
     def get(self, request):
         empty_export = request.query_params.get("empty", "").lower() == "true"

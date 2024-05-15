@@ -15,6 +15,7 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "is_customer",
+            "is_staff",
             "email",
             "password",
             "name",

@@ -108,7 +108,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         blank=True,
     )
-    identification = models.CharField(validators=[id_regex], max_length=15, unique=True)
+    identification = models.CharField(validators=[id_regex], max_length=15)
     birthdate = models.DateField(blank=True, null=True)
     position = models.CharField(max_length=255)
     gender = models.CharField(
