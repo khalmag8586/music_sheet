@@ -6,3 +6,4 @@ uploads/
 *.sqlite3
 *.db
 **/__init__.py
+.env
