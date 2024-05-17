@@ -13,9 +13,8 @@ from rest_framework import (
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from apps.product.models import Product, Images
+from apps.product.models import Product
 from apps.product.serializers import (
-    ProductImageSerializer,
     ProductSerializer,
     ProductActiveSerializer,
     ProductDeleteSerializer,
@@ -63,14 +62,12 @@ class ProductCreateView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED,
         )
 
-    def get_serializer_class(self):
-        """Return the serializer class for request."""
-        if self.action == "list":
-            return ProductSerializer
-        elif self.action == "upload_image":
-            return ProductImageSerializer
+    # def get_serializer_class(self):
+    #     """Return the serializer class for request."""
+    #     if self.action == "list":
+    #         return ProductSerializer
 
-        return self.serializer_class
+    #     return self.serializer_class
 
     @action(methods=["POST"], detail=True, url_path="upload-image")
     def upload_image(self, request, pk=None):
@@ -269,60 +266,6 @@ class ProductUpdateView(generics.UpdateAPIView):
 
         return Response(
             {"detail": _("Product updated successfully")}, status=status.HTTP_200_OK
-        )
-
-
-class ProductImagesUpdateView(generics.UpdateAPIView):
-    serializer_class = ProductImageSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [CustomerPermission]
-    queryset = Images.objects.all()
-
-    def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
-
-    def patch(self, request, *args, **kwargs):
-        image_id = request.data.get(
-            "image_id"
-        )  # Get the image ID from the request body
-        if not image_id:
-            return Response(
-                {"detail": _("Image ID is required.")},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            instance = self.get_queryset().get(id=image_id)
-        except Images.DoesNotExist:
-            return Response(
-                {"detail": _("Image not found.")}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        partial = kwargs.pop("partial", False)
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        # return Response(serializer.data)
-        return Response(
-            {"detail": _("Product image updated successfully")},
-            status=status.HTTP_200_OK,
-        )
-
-
-class ProductImagesDeleteView(generics.DestroyAPIView):
-    serializer_class = ProductImageSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [CustomerPermission]
-    queryset = Images.objects.all()
-
-    def delete(self, request, *args, **kwargs):
-        image_ids = request.data.get("image_id", [])
-        for image_id in image_ids:
-            instance = get_object_or_404(Images, id=image_id)
-            instance.delete()
-        return Response(
-            {"detail": _("Product image deleted successfully")},
-            status=status.HTTP_204_NO_CONTENT,
         )
 
 

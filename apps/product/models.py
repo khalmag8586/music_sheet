@@ -6,6 +6,9 @@ from django.db.models.signals import pre_save
 from django.core.files.base import ContentFile
 from django.dispatch import receiver
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+
+
 from PIL import Image
 from io import BytesIO
 
@@ -13,12 +16,65 @@ from music_sheet.util import unique_slug_generator
 
 from apps.category.models import Category
 
+from django.core.exceptions import ValidationError
+
+
+def validate_file_extension(value, allowed_extensions):
+    ext = value.name.split(".")[-1].lower()
+    if ext not in allowed_extensions:
+        raise ValidationError(
+            _(
+                "Unsupported file extension: %(ext)s. Allowed extensions are: %(allowed_extensions)s"
+            ),
+            params={"ext": ext, "allowed_extensions": ", ".join(allowed_extensions)},
+        )
+
+
+def validate_pdf(value):
+    validate_file_extension(value, ["pdf"])
+
+
+def validate_mp3(value):
+    validate_file_extension(value, ["mp3"])
+
+
+def validate_sib(value):
+    validate_file_extension(value, ["sib"])
+
+
+def validate_midi(value):
+    validate_file_extension(value, ["mid"])
+
 
 def product_image_file_path(instance, filename):
     ext = os.path.splitext(filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
 
-    return os.path.join("uploads", "product", filename)
+    return os.path.join("uploads", "product", "images", filename)
+
+
+def product_pdf_file_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join("uploads", "product", "pdfs", filename)
+
+
+def product_mp3_file_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join("uploads", "product", "mp3s", filename)
+
+
+def product_sib_file_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join("uploads", "product", "sibs", filename)
+
+
+def product_midi_file_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join("uploads", "product", "midis", filename)
 
 
 class Product(models.Model):
@@ -52,6 +108,30 @@ class Product(models.Model):
         null=True,
     )
     image = models.ImageField(blank=True, null=True, upload_to=product_image_file_path)
+    pdf_file = models.FileField(
+        blank=True,
+        null=True,
+        upload_to=product_pdf_file_path,
+        validators=[validate_pdf],
+    )
+    mp3_file = models.FileField(
+        blank=True,
+        null=True,
+        upload_to=product_mp3_file_path,
+        validators=[validate_mp3],
+    )
+    sib_file = models.FileField(
+        blank=True,
+        null=True,
+        upload_to=product_sib_file_path,
+        validators=[validate_sib],
+    )
+    midi_file = models.FileField(
+        blank=True,
+        null=True,
+        upload_to=product_midi_file_path,
+        validators=[validate_midi],
+    )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -91,17 +171,6 @@ class Product(models.Model):
                     ContentFile(buffer.getvalue()),
                     save=True,
                 )
-
-
-class Images(models.Model):
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name="images"
-    )
-    image = models.ImageField(
-        null=True,
-        blank=True,
-        upload_to=product_image_file_path,
-    )
 
 
 @receiver(pre_save, sender=Product)

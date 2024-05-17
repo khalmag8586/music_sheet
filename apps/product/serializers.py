@@ -3,7 +3,7 @@ from rest_framework.exceptions import ValidationError
 
 from django.utils.translation import gettext_lazy as _
 
-from apps.product.models import Product, Images
+from apps.product.models import Product
 from apps.category.models import Category
 from apps.category.serializers import CategorySerializer
 
@@ -15,23 +15,9 @@ class CategorySimpleSerializer(serializers.ModelSerializer):
 
 
 # Product serializers
-class ProductImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Images
-        fields = "__all__"
-        read_only_fields = ["id"]
-        extra_kwargs = {"image": {"required": "True"}}
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    gallery = ProductImageSerializer(many=True, read_only=True, required=False)
-    uploaded_images = serializers.ListField(
-        child=serializers.ImageField(
-            max_length=1000000, allow_empty_file=False, use_url=False
-        ),
-        write_only=True,
-        required=False,
-    )
     created_by_user_name = serializers.CharField(
         source="created_by.name", read_only=True
     )
@@ -60,7 +46,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "price",
             "category",
             "slug",
-            # "sku",
             "created_at",
             "created_by",
             "created_by_user_name",
@@ -71,8 +56,10 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_by_user_name_ar",
             "is_active",
             "image",
-            "gallery",
-            "uploaded_images",
+            "pdf_file",
+            "mp3_file",
+            "sib_file",
+            "midi_file",
         ]
         read_only_fields = [
             "id",
@@ -97,10 +84,6 @@ class ProductSerializer(serializers.ModelSerializer):
 
         product = Product.objects.create(**validated_data)
 
-        if uploaded_images_data:
-            for image_data in uploaded_images_data:
-                product_image = Images.objects.create(product=product, image=image_data)
-                product.gallery.add(product_image)
         for category_id in category_ids:
             category = Category.objects.get(pk=category_id)
             product.category.add(category)  # Add each category to the product
@@ -108,25 +91,12 @@ class ProductSerializer(serializers.ModelSerializer):
         return product
 
     def update(self, instance, validated_data):
-        uploaded_images_data = validated_data.pop("uploaded_images", None)
 
         # Update instance attributes with validated data
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
         instance.save()
-
-        # Handle updating images
-        if uploaded_images_data:
-            # Delete existing images
-            # instance.gallery.all().delete()
-
-            # Create new images
-            for image_data in uploaded_images_data:
-                product_image = Images.objects.create(
-                    product=instance, image=image_data
-                )
-                instance.gallery.add(product_image)
 
         return instance
 

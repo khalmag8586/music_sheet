@@ -11,8 +11,6 @@ from apps.product.views import (
     ProductActiveListView,
     ProductChangeActiveView,
     ProductUpdateView,
-    ProductImagesUpdateView,
-    ProductImagesDeleteView,
     ProductDeleteTemporaryView,
     ProductRestoreView,
     ProductDeleteView,
@@ -61,16 +59,6 @@ urlpatterns = [
         name="change-product-status",
     ),
     path("product_update/", ProductUpdateView.as_view(), name="update-product"),
-    path(
-        "product_image_update/",
-        ProductImagesUpdateView.as_view(),
-        name="product-images-update",
-    ),
-    path(
-        "product_image_delete/",
-        ProductImagesDeleteView.as_view(),
-        name="product-image-delete",
-    ),
     path(
         "product_temp_delete/",
         ProductDeleteTemporaryView.as_view(),
