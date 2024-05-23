@@ -23,6 +23,7 @@ class AboutUsSerializer(serializers.ModelSerializer):
         model = AboutUs
         fields = [
             "id",
+            "index",
             "our_vision",
             "our_vision_ar",
             "our_mission",
@@ -31,6 +32,12 @@ class AboutUsSerializer(serializers.ModelSerializer):
             "who_we_are_ar",
             "our_promise",
             "our_promise_ar",
+            "x_account",
+            "fb_account",
+            "wa_account",
+            "inst_account",
+            "linkedin_account",
+            "yt_account",
             "created_at",
             "updated_at",
             "created_by",
@@ -42,6 +49,7 @@ class AboutUsSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "index",
             "created_at",
             "updated_at",
             "created_by",

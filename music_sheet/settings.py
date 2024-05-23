@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     "apps.about_us",
     "apps.contact_us",
     "apps.customer",
-    "apps.cart",
+    # "apps.cart",
     # "apps.section",
 ]
 

@@ -10,8 +10,9 @@ class AboutUsManager(models.Manager):
     def reorder_indexes(self):
         # Reorder the indexes based on the created_at field
         for i, obj in enumerate(self.all().order_by("created_at")):
-            obj.index = i
-            obj.save()
+            if obj.index != i:
+                obj.index = i
+                super(AboutUs, obj).save(update_fields=["index"])
 
 
 class AboutUs(models.Model):
@@ -56,6 +57,11 @@ class AboutUs(models.Model):
             self.index = 0 if max_index is None else max_index + 1
         super().save(*args, **kwargs)
         # Reorder indexes after saving
+        AboutUs.objects.reorder_indexes()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        # Reorder indexes after deletion
         AboutUs.objects.reorder_indexes()
 
     class Meta:
