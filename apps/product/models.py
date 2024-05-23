@@ -132,6 +132,7 @@ class Product(models.Model):
         upload_to=product_midi_file_path,
         validators=[validate_midi],
     )
+    views_num = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -171,7 +172,9 @@ class Product(models.Model):
                     ContentFile(buffer.getvalue()),
                     save=True,
                 )
-
+    def increment_views_num(self):
+        self.views_num += 1
+        self.save(update_fields=['views_num'])
 
 @receiver(pre_save, sender=Product)
 def pre_save_receiver(sender, instance, *args, **kwargs):

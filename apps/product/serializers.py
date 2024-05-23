@@ -60,6 +60,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "mp3_file",
             "sib_file",
             "midi_file",
+            "views_num",
         ]
         read_only_fields = [
             "id",
@@ -72,6 +73,104 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_by",
             "updated_by_user_name",
             "updated_by_user_name_ar",
+            "views_num",
+        ]
+
+    def create(self, validated_data):
+        uploaded_images_data = validated_data.pop(
+            "uploaded_images", None
+        )  # Extract uploaded images data
+        category_ids = validated_data.pop(
+            "category", []
+        )  # Get category IDs from validated data
+
+        product = Product.objects.create(**validated_data)
+
+        for category_id in category_ids:
+            category = Category.objects.get(pk=category_id)
+            product.category.add(category)  # Add each category to the product
+
+        return product
+
+    def update(self, instance, validated_data):
+
+        # Update instance attributes with validated data
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        return instance
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime("%Y-%m-%d")
+
+    def get_updated_at(self, obj):
+        return obj.updated_at.strftime("%Y-%m-%d")
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Include category data in representation
+        categories_data = CategorySimpleSerializer(
+            instance.category.all(), many=True
+        ).data
+        representation["category"] = categories_data
+        return representation
+
+class ProductImageOnlySerializer(serializers.ModelSerializer):
+    created_by_user_name = serializers.CharField(
+        source="created_by.name", read_only=True
+    )
+    created_by_user_name_ar = serializers.CharField(
+        source="created_by.name_ar", read_only=True
+    )
+    updated_by_user_name = serializers.CharField(
+        source="updated_by.name", read_only=True
+    )
+    updated_by_user_name_ar = serializers.CharField(
+        source="updated_by.name_ar", read_only=True
+    )
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+    category = serializers.ListField(
+        child=serializers.UUIDField(), write_only=True, required=False
+    )
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "name",
+            "name_ar",
+            "description",
+            "price",
+            "category",
+            "slug",
+            "created_at",
+            "created_by",
+            "created_by_user_name",
+            "created_by_user_name_ar",
+            "updated_at",
+            "updated_by",
+            "updated_by_user_name",
+            "updated_by_user_name_ar",
+            "is_active",
+            "image",
+            "mp3_file",
+            "views_num",
+        ]
+        read_only_fields = [
+            "id",
+            "slug",
+            "created_at",
+            "created_by",
+            "created_by_user_name",
+            "created_by_user_name_ar",
+            "updated_at",
+            "updated_by",
+            "updated_by_user_name",
+            "updated_by_user_name_ar",
+            "views_num",
         ]
 
     def create(self, validated_data):

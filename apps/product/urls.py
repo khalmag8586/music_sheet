@@ -9,6 +9,7 @@ from apps.product.views import (
     ProductByCategoryView,
     ProductRetrieveView,
     ProductActiveListView,
+    ProductActiveRetrieveView,
     ProductChangeActiveView,
     ProductUpdateView,
     ProductDeleteTemporaryView,
@@ -52,6 +53,11 @@ urlpatterns = [
         "product_active_list/",
         ProductActiveListView.as_view(),
         name="active-product-list",
+    ),
+    path(
+        "product_active_retrieve/",
+        ProductActiveRetrieveView.as_view(),
+        name="product_active_retrieve",
     ),
     path(
         "product_change_status/",

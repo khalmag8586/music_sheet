@@ -16,6 +16,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from apps.product.models import Product
 from apps.product.serializers import (
     ProductSerializer,
+    ProductImageOnlySerializer,
     ProductActiveSerializer,
     ProductDeleteSerializer,
     ProductDialogSerializer,
@@ -156,8 +157,8 @@ class ProductCategoryBulkUpdateView(generics.UpdateAPIView):
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.filter(is_deleted=False)
     serializer_class = ProductSerializer
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name", "name_ar", "description", "slug"]
@@ -204,13 +205,29 @@ class ProductRetrieveView(generics.RetrieveAPIView):
 
 class ProductActiveListView(generics.ListAPIView):
     queryset = Product.objects.filter(is_active=True, is_deleted=False)
-    serializer_class = ProductSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [CustomerPermission]
+    serializer_class = ProductImageOnlySerializer
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ["name", "description", "sku", "slug"]
+    search_fields = ["name", "description", "slug"]
     ordering_fields = ["price", "-price", "name", "-name"]
+
+
+class ProductActiveRetrieveView(generics.RetrieveAPIView):
+    serializer_class = ProductImageOnlySerializer
+    lookup_field = "id"
+
+    def get_object(self):
+        product_id = self.request.query_params.get("product_id")
+        product = get_object_or_404(Product, id=product_id)
+        return product
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.increment_views_num()  # Increment retrieval count
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class ProductChangeActiveView(generics.UpdateAPIView):
