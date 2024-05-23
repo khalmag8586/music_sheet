@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.about_us",
     "apps.contact_us",
     "apps.customer",
+    "apps.cart",
     # "apps.section",
 ]
 
@@ -241,13 +242,8 @@ AUTH_USER_MODEL = "user.User"
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:243",
     "http://localhost:24327",
-    "https://f-gardens.vercel.app",
-    "https://f-gardens-admin.vercel.app",
-    "https://f-gardens-admin.vercel.app",
-    "https://t-blue-rosy.vercel.app",
-    "http://localhost:24428",
-    "https://admins.gardens-one.com",
-    "https://gardens-one.com",
+    "http://localhost:2459",
+    "http://localhost:24530",
 ]
 CORS_ALLOW_ALL_ORIGINS: True
 CORS_ALLOW_CREDENTIALS: True
