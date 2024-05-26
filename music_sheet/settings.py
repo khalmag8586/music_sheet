@@ -57,6 +57,34 @@ EMAIL_PORT = 1025
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL = 'admin@example.com'  # Default from email
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.example.com'  # Your email host
+# EMAIL_PORT = 587  # Your email port
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@example.com'  # Your email host user
+# EMAIL_HOST_PASSWORD = 'your-email-password'  # Your email host password
+# DEFAULT_FROM_EMAIL = 'your-email@example.com'  # Default from email
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'django_debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 # djoser settings
 DJOSER = {
@@ -78,9 +106,7 @@ DJOSER = {
         "password_reset": "djoser.email.PasswordResetEmail",
         "password_changed_confirmation": "djoser.email.PasswordChangedConfirmationEmail",
     },
-    #     "CONSTANTS": {
-    #         "detail":  "rcm_api.custom_messages.CustomChangePasswordMessages"
-    #     },
+   
 }
 
 REST_FRAMEWORK = {

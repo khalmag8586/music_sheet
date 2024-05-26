@@ -4,6 +4,9 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.conf import settings
+from django.http import JsonResponse
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -15,20 +18,25 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.parsers import JSONParser
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
-import uuid
-import csv
+import secrets
+import logging
+import json
+
 
 from apps.customer.models import Customer
 from apps.customer.serializers import CustomerSerializer
 
 from music_sheet.pagination import StandardResultsSetPagination
+
+from music_sheet.custom_permissions import CustomerPermission
+from django.views.decorators.csrf import csrf_exempt
 
 
 class CustomerLoginView(APIView):
@@ -78,7 +86,6 @@ class CustomerLoginView(APIView):
 
 class CreateCustomerView(generics.CreateAPIView):
     serializer_class = CustomerSerializer
-    
 
     def perform_create(self, serializer):
         # Capitalize the user's name before saving
@@ -97,15 +104,97 @@ class CreateCustomerView(generics.CreateAPIView):
         )
 
 
-from music_sheet.custom_permissions import CustomerPermission
-
-
 class CustomerListView(generics.ListAPIView):
     queryset = Customer.objects.filter(is_deleted=False, is_customer=True)
     serializer_class = CustomerSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, CustomerPermission]
+    # permission_classes = [IsAuthenticated, CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name", "name_ar", "mobile_number", "email"]
     ordering_fields = ["name"]
+
+
+class CustomerRetrieve(generics.RetrieveAPIView):
+    queryset = Customer.objects.filter(is_deleted=False, is_customer=True)
+    serializer_class = CustomerSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    lookup_field = "id"
+
+    def get_queryset(self):
+        return Customer.objects.filter(
+            is_deleted=False, is_customer=True, is_staff=False
+        )
+
+    def get_object(self):
+        customer_id = self.request.query_params.get("customer_id")
+        customer = get_object_or_404(self.get_queryset(), id=customer_id)
+        return customer
+
+
+class ManagerCustomerView(generics.RetrieveUpdateAPIView):
+    serializer_class = CustomerSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.customer
+
+    def update(self, request, *args, **kwargs):
+
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(
+            {"detail": _("Your data Updated successfully")}, status=status.HTTP_200_OK
+        )
+
+
+logger = logging.getLogger(__name__)
+
+
+@csrf_exempt
+def forgot_password(request):
+    if request.method == "POST":
+
+        try:
+            data = json.loads(request.body)  # Parse the JSON request body
+            email = data.get('email')
+            if not email:
+                return JsonResponse(
+                    {"detail": _("Email is required.")}, status=status.HTTP_400_BAD_REQUEST
+                )
+            customer = get_object_or_404(Customer, email=email)
+
+            # Generate a new password
+            new_password = secrets.token_hex(8)  # Generate an 8-character password
+
+            # Update user's password
+            customer.set_password(new_password)
+            customer.save()
+
+            # Send email with new password
+            send_mail(
+                "Password Reset",
+                f"Your new password is: {new_password}",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+
+            logger.info(f"Password reset for {email} successful.")
+            return JsonResponse({"detail": _("Password reset email sent successfully.")})
+        except Exception as e:
+            logger.error(f"Error during password reset: {str(e)}")
+            return JsonResponse(
+                {"detail": _("An error occurred. Please try again later.")},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    else:
+        return JsonResponse(
+            {"detail": _("Method not allowed.")}, status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )

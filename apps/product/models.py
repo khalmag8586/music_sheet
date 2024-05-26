@@ -15,7 +15,7 @@ from io import BytesIO
 from music_sheet.util import unique_slug_generator
 
 from apps.category.models import Category
-
+from apps.customer.models import Customer
 from django.core.exceptions import ValidationError
 
 
@@ -172,9 +172,45 @@ class Product(models.Model):
                     ContentFile(buffer.getvalue()),
                     save=True,
                 )
-    def increment_views_num(self):
-        self.views_num += 1
-        self.save(update_fields=['views_num'])
+
+    # def increment_views_num(self):
+    #     self.views_num += 1
+    #     self.save(update_fields=['views_num'])
+
+    # #Using session
+    # def increment_views_num(self, request):
+    #     if request.user.is_authenticated:
+    #         viewed_products = request.session.get("viewed_products", [])
+    #         product_id_str = str(self.id)  # Convert UUID to string
+    #         if product_id_str not in viewed_products:
+    #             self.views_num += 1
+    #             self.save(update_fields=["views_num"])
+    #             viewed_products.append(product_id_str)
+    #             request.session["viewed_products"] = viewed_products
+    #             request.session.modified = True  # Ensure the session is saved
+
+    def increment_views_num(self, customer):
+        from .models import ProductView  # Avoid circular import
+
+        if not ProductView.objects.filter(product=self, customer=customer).exists():
+            ProductView.objects.create(product=self, customer=customer)
+            self.views_num += 1
+            self.save(update_fields=["views_num"])
+
+
+class ProductView(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(
+        Product, related_name="views", on_delete=models.CASCADE
+    )
+    customer = models.ForeignKey(
+        Customer, related_name="product_views", on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("product", "customer")
+
 
 @receiver(pre_save, sender=Product)
 def pre_save_receiver(sender, instance, *args, **kwargs):
