@@ -5,6 +5,7 @@ from apps.customer.views import (
     CustomerListView,
     CustomerRetrieve,
     ManagerCustomerView,
+    CustomerActivationStatusView,
     forgot_password,
 )
 
@@ -16,6 +17,11 @@ urlpatterns = [
     path("customer_retrieve/", CustomerRetrieve.as_view(), name="customer-retrieve"),
     path(
         "customer_me/", ManagerCustomerView.as_view(), name="customer update his data"
+    ),
+    path(
+        "customer_change_active/",
+        CustomerActivationStatusView.as_view(),
+        name="customer_change_active",
     ),
     path("forgot_password/", forgot_password, name="forgot_password"),
 ]

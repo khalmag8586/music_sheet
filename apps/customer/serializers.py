@@ -16,6 +16,7 @@ class CustomerSerializer(serializers.ModelSerializer):
             "id",
             "is_customer",
             "is_staff",
+            "is_active",
             "email",
             "password",
             "name",
@@ -24,7 +25,14 @@ class CustomerSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "is_active",
+            "is_staff",
+            "is_customer",
+            "created_at",
+            "updated_at",
+        ]
         extra_kwargs = {
             "password": {
                 "write_only": True,
@@ -80,3 +88,9 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def get_updated_at(self, obj):
         return obj.updated_at.strftime("%Y-%m-%d")
+
+
+class CustomerActivationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ["is_active"]

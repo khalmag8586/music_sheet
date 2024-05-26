@@ -31,7 +31,7 @@ import json
 
 
 from apps.customer.models import Customer
-from apps.customer.serializers import CustomerSerializer
+from apps.customer.serializers import CustomerSerializer, CustomerActivationSerializer
 
 from music_sheet.pagination import StandardResultsSetPagination
 
@@ -58,7 +58,11 @@ class CustomerLoginView(APIView):
             )
 
         if not customer.is_active:
-            raise AuthenticationFailed(_("User account is inactive"))
+            raise AuthenticationFailed(
+                _(
+                    "Customer account is inactive, please contact with website management"
+                )
+            )
         if customer.is_deleted == True:
             raise AuthenticationFailed(_("This user is deleted"))
         if not customer.check_password(password):
@@ -154,6 +158,41 @@ class ManagerCustomerView(generics.RetrieveUpdateAPIView):
         )
 
 
+class CustomerActivationStatusView(generics.UpdateAPIView):
+    serializer_class = CustomerActivationSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        customer_id = self.request.query_params.get("customer_id")
+        customer = get_object_or_404(Customer, id=customer_id)
+        return customer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        is_active = request.data.get("is_active")
+
+        if is_active is None:
+            return Response(
+                {"detail": _("'is_active' field is required")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if is_active and not request.user.is_staff:
+            return Response(
+                {"detail": _("You are not authorized to reactivate this account.")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(
+            {"detail": _("The Active Status Updated successfully")},
+            status=status.HTTP_200_OK,
+        )
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -163,10 +202,11 @@ def forgot_password(request):
 
         try:
             data = json.loads(request.body)  # Parse the JSON request body
-            email = data.get('email')
+            email = data.get("email")
             if not email:
                 return JsonResponse(
-                    {"detail": _("Email is required.")}, status=status.HTTP_400_BAD_REQUEST
+                    {"detail": _("Email is required.")},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             customer = get_object_or_404(Customer, email=email)
 
@@ -187,7 +227,9 @@ def forgot_password(request):
             )
 
             logger.info(f"Password reset for {email} successful.")
-            return JsonResponse({"detail": _("Password reset email sent successfully.")})
+            return JsonResponse(
+                {"detail": _("Password reset email sent successfully.")}
+            )
         except Exception as e:
             logger.error(f"Error during password reset: {str(e)}")
             return JsonResponse(
@@ -196,5 +238,6 @@ def forgot_password(request):
             )
     else:
         return JsonResponse(
-            {"detail": _("Method not allowed.")}, status=status.HTTP_405_METHOD_NOT_ALLOWED
+            {"detail": _("Method not allowed.")},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
