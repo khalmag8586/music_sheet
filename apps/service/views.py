@@ -72,7 +72,7 @@ class ServiceCreateView(generics.CreateAPIView):
 
 
 class ServiceListView(generics.ListAPIView):
-    queryset = Service.objects.filter(is_deleted=False)
+    queryset = Service.objects.filter(is_deleted=False).order_by("-created_at")
     serializer_class = ServiceSerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]
@@ -87,7 +87,7 @@ class ServiceListView(generics.ListAPIView):
 
 
 class DeletedServiceListView(generics.ListAPIView):
-    queryset = Service.objects.filter(is_deleted=True)
+    queryset = Service.objects.filter(is_deleted=True).order_by("-created_at")
     serializer_class = ServiceSerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]
@@ -111,7 +111,7 @@ class ServiceRetrieveView(generics.RetrieveAPIView):
 
 
 class ActiveServiceListView(generics.ListAPIView):
-    queryset = Service.objects.filter(is_deleted=False, is_active=True)
+    queryset = Service.objects.filter(is_deleted=False, is_active=True).order_by("-created_at")
     serializer_class = ServiceSerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]

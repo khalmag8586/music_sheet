@@ -35,7 +35,7 @@ class ContactUsListView(generics.ListAPIView):
     serializer_class = ContactUsSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomerPermission]
-    queryset = ContactUs.objects.all()
+    queryset = ContactUs.objects.all().order_by("-created_at")
     pagination_class = StandardResultsSetPagination
 
 

@@ -155,7 +155,7 @@ class ProductCategoryBulkUpdateView(generics.UpdateAPIView):
 
 
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.filter(is_deleted=False)
+    queryset = Product.objects.filter(is_deleted=False).order_by("-created_at")
     serializer_class = ProductSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomerPermission]
@@ -166,7 +166,7 @@ class ProductListView(generics.ListAPIView):
 
 
 class DeletedProductListView(generics.ListAPIView):
-    queryset = Product.objects.filter(is_deleted=True)
+    queryset = Product.objects.filter(is_deleted=True).order_by("-created_at")
     serializer_class = ProductSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomerPermission]
@@ -204,7 +204,7 @@ class ProductRetrieveView(generics.RetrieveAPIView):
 
 
 class ProductActiveListView(generics.ListAPIView):
-    queryset = Product.objects.filter(is_active=True, is_deleted=False)
+    queryset = Product.objects.filter(is_active=True, is_deleted=False).order_by("-created_at")
     serializer_class = ProductImageOnlySerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]
