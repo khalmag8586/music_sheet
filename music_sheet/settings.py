@@ -46,8 +46,9 @@ INSTALLED_APPS = [
     "apps.about_us",
     "apps.contact_us",
     "apps.customer",
+    "apps.section",
     # "apps.cart",
-    # "apps.section",
+
 ]
 
 # email settings for mailhog
@@ -106,7 +107,7 @@ DJOSER = {
         "password_reset": "djoser.email.PasswordResetEmail",
         "password_changed_confirmation": "djoser.email.PasswordChangedConfirmationEmail",
     },
-   
+
 }
 
 REST_FRAMEWORK = {

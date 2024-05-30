@@ -42,10 +42,13 @@ from user.filters import UserFilter
 from music_sheet.pagination import StandardResultsSetPagination
 
 from music_sheet.custom_permissions import CustomerPermission
+
+
 # User login view
 class LoginView(APIView):
     # Primary login view
     authentication_classes = [JWTAuthentication]
+
     def post(self, request):
         identifier = request.data.get("identifier")  # Field for email or phone number
         password = request.data.get("password")
@@ -116,7 +119,9 @@ class CreateUserView(generics.CreateAPIView):
 
 
 class UserListView(generics.ListAPIView):
-    queryset = User.objects.filter(is_deleted=False, is_superuser=False,is_staff=True)
+    queryset = User.objects.filter(
+        is_deleted=False, is_superuser=False, is_staff=True
+    ).order_by("-created_at")
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomerPermission]
@@ -126,11 +131,18 @@ class UserListView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = UserFilter
     search_fields = ["name", "name_ar", "mobile_number", "email", "identification"]
-    ordering_fields = ["name_ar"]
+    ordering_fields = [
+        "name",
+        "-name",
+        "name_ar",
+        "-name_ar",
+        "created_at",
+        "-created_at",
+    ]
 
 
 class DeletedUserView(generics.ListAPIView):
-    queryset = User.objects.filter(is_deleted=True)
+    queryset = User.objects.filter(is_deleted=True).order_by("-created_at")
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomerPermission]
@@ -138,7 +150,14 @@ class DeletedUserView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = UserFilter
     search_fields = ["name", "name_ar", "mobile_number", "email", "identification"]
-    ordering_fields = ["name_ar"]
+    ordering_fields = [
+        "name",
+        "-name",
+        "name_ar",
+        "-name_ar",
+        "created_at",
+        "-created_at",
+    ]
 
 
 class UserRetrieveView(generics.RetrieveAPIView):

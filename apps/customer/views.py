@@ -109,7 +109,7 @@ class CreateCustomerView(generics.CreateAPIView):
 
 
 class CustomerListView(generics.ListAPIView):
-    queryset = Customer.objects.filter(is_deleted=False, is_customer=True)
+    queryset = Customer.objects.filter(is_deleted=False, is_customer=True).order_by("-created_at")
     serializer_class = CustomerSerializer
     authentication_classes = [JWTAuthentication]
     # permission_classes = [IsAuthenticated, CustomerPermission]

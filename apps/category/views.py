@@ -72,27 +72,27 @@ class CategoryCreateView(generics.CreateAPIView):
 
 
 class CategoryListView(generics.ListAPIView):
-    queryset = Category.objects.filter(is_deleted=False)
+    queryset = Category.objects.filter(is_deleted=False).order_by("-created_at")
     serializer_class = CategorySerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CategoryFilter
-    search_fields = ["name", "name_ar"]
-    ordering_fields = ["name", "-name", "name_ar", "-name_ar"]
+    search_fields = ["name", "name_ar",'slug','parent']
+    ordering_fields = ["name", "-name", "name_ar", "-name_ar",'created_at','-created_at']
 
 
 class DeletedCategoryListView(generics.ListAPIView):
-    queryset = Category.objects.filter(is_deleted=True)
+    queryset = Category.objects.filter(is_deleted=True).order_by("-created_at")
     serializer_class = CategorySerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CategoryFilter
-    search_fields = ["name", "name_ar"]
-    ordering_fields = ["name", "-name", "name_ar", "-name_ar"]
+    search_fields = ["name", "name_ar",'slug','parent']
+    ordering_fields = ["name", "-name", "name_ar", "-name_ar",'created_at','-created_at']
 
 
 class CategoryRetrieveView(generics.RetrieveAPIView):
@@ -130,15 +130,15 @@ class ChildrenCategoriesView(generics.ListAPIView):
 
 
 class ActiveCategoryListView(generics.ListAPIView):
-    queryset = Category.objects.filter(is_deleted=False, is_active=True)
+    queryset = Category.objects.filter(is_deleted=False, is_active=True).order_by("-created_at")
     serializer_class = CategorySerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CategoryFilter
-    search_fields = ["name"]
-    ordering_fields = ["name", "-name"]
+    search_fields = ["name", "name_ar",'slug','parent']
+    ordering_fields = ["name", "-name", "name_ar", "-name_ar",'created_at','-created_at']
 
 
 class CategoryChangeActiveView(generics.UpdateAPIView):
@@ -362,7 +362,7 @@ class CategoryDialogView(generics.ListAPIView):
 
 
 class ParentCategoryDialog(generics.ListAPIView):
-    queryset = Category.objects.filter(parent__isnull=True, is_deleted=False)
+    queryset = Category.objects.filter(parent__isnull=True, is_deleted=False).order_by("-created_at")
     serializer_class = CategoryDialogSerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]
