@@ -7,15 +7,26 @@ import os
 from PIL import Image
 from io import BytesIO
 
+from apps.section.models import Section
+
+
 def service_image_file_path(instance, filename):
     ext = os.path.splitext(filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
     return os.path.join("uploads", "service", filename)
+
+
 class Service(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     name = models.CharField(max_length=255, unique=True)
     name_ar = models.CharField(max_length=255, unique=True)
-    # service_symbol = models.CharField(max_length=2, unique=True)
+    section = models.ForeignKey(
+        Section,
+        related_name="sections",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
     description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -41,7 +52,7 @@ class Service(models.Model):
         upload_to=service_image_file_path,
     )
 
-    def save (self,*args,**kwargs):
+    def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:
             image_size = self.image.size  # Size in bytes
@@ -49,6 +60,7 @@ class Service(models.Model):
             if image_size > max_size_bytes:
                 # Resize the photo
                 self.resize_photo()
+
     def resize_photo(self):
         # Set the maximum size in bytes (1 MB = 1024 * 1024 bytes)
         max_size_bytes = 500 * 500
@@ -79,6 +91,7 @@ class Service(models.Model):
                     save=True,
                 )
 
+
 class ServiceImages(models.Model):
     service = models.ForeignKey(
         Service, on_delete=models.CASCADE, related_name="images"
@@ -88,4 +101,3 @@ class ServiceImages(models.Model):
         blank=True,
         upload_to=service_image_file_path,
     )
-

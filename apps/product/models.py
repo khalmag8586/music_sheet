@@ -16,6 +16,7 @@ from music_sheet.util import unique_slug_generator
 
 from apps.category.models import Category
 from apps.customer.models import Customer
+from apps.section.models import Section
 from django.core.exceptions import ValidationError
 
 
@@ -84,6 +85,13 @@ class Product(models.Model):
         primary_key=True,
     )
     category = models.ManyToManyField(Category, related_name="products", blank=True)
+    section = models.ForeignKey(
+        Section,
+        related_name="products_section",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
     name = models.CharField(max_length=255, unique=True)
     name_ar = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, allow_unicode=True, unique=True)
@@ -200,9 +208,7 @@ class Product(models.Model):
 
 class ProductView(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(
-        Product, related_name="views", on_delete=models.CASCADE
-    )
+    product = models.ForeignKey(Product, related_name="views", on_delete=models.CASCADE)
     customer = models.ForeignKey(
         Customer, related_name="product_views", on_delete=models.CASCADE
     )
