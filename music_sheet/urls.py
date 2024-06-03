@@ -27,7 +27,7 @@ urlpatterns += i18n_patterns(
     path("api/about_us/", include("apps.about_us.urls")),
     path("api/contact_us/", include("apps.contact_us.urls")),
     path("api/customer/", include("apps.customer.urls")),
-    # path("api/section/", include("apps.section.urls")),
+    path("api/section/", include("apps.section.urls")),
 )
 
 if settings.DEBUG:
