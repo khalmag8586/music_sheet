@@ -32,6 +32,7 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
+    section_name = serializers.CharField(source="section.name", read_only=True)
     category = serializers.ListField(
         child=serializers.UUIDField(), write_only=True, required=False
     )
@@ -45,6 +46,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "description",
             "price",
             "category",
+            "section",
+            "section_name",
             "slug",
             "created_at",
             "created_by",
@@ -116,6 +119,7 @@ class ProductSerializer(serializers.ModelSerializer):
         ).data
         representation["category"] = categories_data
         return representation
+
 
 class ProductImageOnlySerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.CharField(

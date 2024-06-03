@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from apps.service.models import Service,ServiceImages
+from apps.service.models import Service, ServiceImages
+
 
 class ServiceImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,6 +32,7 @@ class ServiceSerializer(serializers.ModelSerializer):
     updated_by_user_name_ar = serializers.CharField(
         source="updated_by.name_ar", read_only=True
     )
+    section_name = serializers.CharField(source="section.name", read_only=True)
 
     class Meta:
         model = Service
@@ -38,7 +40,8 @@ class ServiceSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "name_ar",
-            # "service_symbol",
+            "section",
+            "section_name",
             "description",
             "created_at",
             "created_by",
@@ -60,19 +63,26 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     def get_updated_at(self, obj):
         return obj.updated_at.strftime("%Y-%m-%d")
+
     def create(self, validated_data):
-        uploaded_images_data = validated_data.pop('uploaded_images', None)  # Extract uploaded images data
+        uploaded_images_data = validated_data.pop(
+            "uploaded_images", None
+        )  # Extract uploaded images data
         service = Service.objects.create(**validated_data)  # Create the service object
 
         if uploaded_images_data:
             for image_data in uploaded_images_data:
-                service_image = ServiceImages.objects.create(service=service, image=image_data)  # Set service field
-                service.gallery.add(service_image)  # Associate service image with the service
+                service_image = ServiceImages.objects.create(
+                    service=service, image=image_data
+                )  # Set service field
+                service.gallery.add(
+                    service_image
+                )  # Associate service image with the service
 
         return service
-    def update(self, instance, validated_data):
-        uploaded_images_data = validated_data.pop('uploaded_images', None)
 
+    def update(self, instance, validated_data):
+        uploaded_images_data = validated_data.pop("uploaded_images", None)
 
         # Update instance attributes with validated data
         for attr, value in validated_data.items():
@@ -87,10 +97,13 @@ class ServiceSerializer(serializers.ModelSerializer):
 
             # Create new images
             for image_data in uploaded_images_data:
-                service_image = ServiceImages.objects.create(service=instance, image=image_data)
+                service_image = ServiceImages.objects.create(
+                    service=instance, image=image_data
+                )
                 instance.gallery.add(service_image)
 
         return instance
+
 
 class ServiceActiveSerializer(serializers.ModelSerializer):
     class Meta:
