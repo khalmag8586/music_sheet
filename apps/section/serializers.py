@@ -58,6 +58,7 @@ class SectionSerializer(serializers.ModelSerializer):
             "updated_by_user_name",
             "updated_by_user_name_ar",
             "image",
+            "video",
             "gallery",
             "uploaded_media",
         ]
@@ -150,7 +151,10 @@ class SectionSerializer(serializers.ModelSerializer):
 
     return instance
         """
-
+class ActiveSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Section
+        fields=['is_active']
 
 class SectionDialogSerializer(serializers.ModelSerializer):
     class Meta:
