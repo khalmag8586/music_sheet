@@ -32,6 +32,21 @@ def validate_file_extension(value):
         raise ValidationError(_("Unsupported file extension."))
 
 
+def validate_video_extension(value):
+    valid_extensions = [
+        ".gif",
+        ".bmp",
+        ".tiff",
+        ".mp4",
+        ".avi",
+        ".mov",
+        ".wmv",
+    ]
+    ext = os.path.splitext(value.name)[1]  # [0] returns path + filename
+    if not ext.lower() in valid_extensions:
+        raise ValidationError(_("Unsupported video extension."))
+
+
 def section_file_path(instance, filename):
     ext = os.path.splitext(filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
@@ -66,6 +81,12 @@ class Section(models.Model):
         blank=True,
         null=True,
         upload_to=section_file_path,
+    )
+    video = models.FileField(
+        blank=True,
+        null=True,
+        upload_to=section_file_path,
+        validators=[validate_video_extension],
     )
     gallery = models.ManyToManyField(
         "SectionMediaFiles", related_name="sections", blank=True

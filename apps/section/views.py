@@ -16,6 +16,7 @@ from apps.section.models import Section, SectionMediaFiles
 from apps.section.serializers import (
     SectionSerializer,
     SectionMediaSerializer,
+    ActiveSectionSerializer,
     SectionDialogSerializer,
 )
 
@@ -72,6 +73,45 @@ class SectionRetrieveView(generics.RetrieveAPIView):
         return section
 
 
+class ActiveSectionListView(generics.ListAPIView):
+    queryset = Section.objects.filter(is_deleted=False, is_active=True).order_by(
+        "-created_at"
+    )
+    serializer_class = SectionSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [CustomerPermission]
+    pagination_class = StandardResultsSetPagination
+
+class SectionChangeActiveView(generics.UpdateAPIView):
+    serializer_class = ActiveSectionSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [CustomerPermission]
+
+    def perform_update(self, serializer):
+        serializer.save(updated_by=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        section_ids = request.data.get("section_id", [])
+        partial = kwargs.pop("partial", False)
+        is_active = request.data.get("is_active")
+        if is_active is None:
+            return Response(
+                {"detail": _("'is_active' field is required")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        for section_id in section_ids:
+            instance = get_object_or_404(Section, id=section_id)
+            serializer = self.get_serializer(
+                instance, data=request.data, partial=partial
+            )
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+        return Response(
+            {"detail": _("Section status changed successfully")},
+            status=status.HTTP_200_OK,
+        )
+
+
 class SectionUpdateView(generics.UpdateAPIView):
     serializer_class = SectionSerializer
     lookup_field = "section_id"
@@ -96,6 +136,7 @@ class SectionUpdateView(generics.UpdateAPIView):
         return Response(
             {"detail": _("Section updated successfully")}, status=status.HTTP_200_OK
         )
+
 
 class SectionMediaUpdateView(generics.UpdateAPIView):
     serializer_class = SectionMediaSerializer
@@ -129,8 +170,10 @@ class SectionMediaUpdateView(generics.UpdateAPIView):
         self.perform_update(serializer)
         # return Response(serializer.data)
         return Response(
-            {"detail": _("Section Media updated successfully")}, status=status.HTTP_200_OK
+            {"detail": _("Section Media updated successfully")},
+            status=status.HTTP_200_OK,
         )
+
 
 class SectionMediaDeleteView(generics.DestroyAPIView):
     serializer_class = SectionMediaSerializer
@@ -148,6 +191,7 @@ class SectionMediaDeleteView(generics.DestroyAPIView):
             status=status.HTTP_204_NO_CONTENT,
         )
 
+
 class SectionDeleteView(generics.DestroyAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomerPermission]
@@ -161,3 +205,9 @@ class SectionDeleteView(generics.DestroyAPIView):
             {"detail": _("Section permanently deleted successfully")},
             status=status.HTTP_204_NO_CONTENT,
         )
+
+class SectionDialogView(generics.ListAPIView):
+    queryset = Section.objects.filter(is_deleted=False)
+    serializer_class = SectionDialogSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [CustomerPermission]
