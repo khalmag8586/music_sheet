@@ -1,0 +1,10 @@
+env/
+uploads/
+**/migrations/
+**/__pycache__/
+**/.pyc
+*.sqlite3
+*.db
+**/__init__.py
+.env
+django_debug.log
