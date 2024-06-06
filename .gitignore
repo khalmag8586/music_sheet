@@ -8,3 +8,4 @@ uploads/
 **/__init__.py
 .env
 *.log
+django_debug.log
