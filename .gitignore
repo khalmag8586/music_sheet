@@ -7,4 +7,4 @@ uploads/
 *.db
 **/__init__.py
 .env
-django_debug.log
+*.log
