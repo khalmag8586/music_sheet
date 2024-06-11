@@ -28,8 +28,8 @@ from music_sheet.pagination import StandardResultsSetPagination
 
 class CartCreateView(generics.CreateAPIView):
     serializer_class = CartSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [OnlyCustomer]
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [OnlyCustomer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -86,9 +86,11 @@ class CartItemCreateView(generics.CreateAPIView):
         for item_data in items:
             product_id = item_data.get("product_id")
             quantity = int(item_data.get("quantity", 1))  # Default quantity to 1
+            purchase_type = item_data.get("purchase_type", "pdf")  # Default to 'pdf'
+
             try:
                 cart_item = CartItems.objects.filter(
-                    cart=cart, product__id=product_id
+                    cart=cart, product__id=product_id, purchase_type=purchase_type
                 ).first()
                 if cart_item:
                     # # If the product is already in the cart, update the quantity
@@ -122,7 +124,7 @@ class CartItemCreateView(generics.CreateAPIView):
 
                 # Create a new cart item with the specified quantity
                 cart_item = CartItems.objects.create(
-                    cart=cart, product=product, quantity=quantity
+                    cart=cart, product=product, quantity=quantity,purchase_type=purchase_type
                 )
             except CartItems.MultipleObjectsReturned:
                 return Response(
@@ -304,6 +306,7 @@ class WishListListView(generics.ListAPIView):
     permission_classes = [OnlyCustomer]
     pagination_class = StandardResultsSetPagination
 
+
 class WishlistRetrieveView(generics.RetrieveAPIView):
     queryset = Wishlist.objects.all()
     serializer_class = WishListSerializer
@@ -481,6 +484,7 @@ class MoveWishlistItemToCartView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED,
         )
 
+
 class WishlistItemUpdateQuantityView(generics.UpdateAPIView):
     queryset = WishlistItem.objects.all()
     serializer_class = WishListItemSerializer
@@ -493,10 +497,13 @@ class WishlistItemUpdateQuantityView(generics.UpdateAPIView):
         new_quantity = request.data.get("quantity")
 
         try:
-            wishlist_item = WishlistItem.objects.get(wishlist__id=wishlist_id, product__id=product_id)
+            wishlist_item = WishlistItem.objects.get(
+                wishlist__id=wishlist_id, product__id=product_id
+            )
         except WishlistItem.DoesNotExist:
             return Response(
-                {"detail": _("Wishlist item not found.")}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("Wishlist item not found.")},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if new_quantity is not None:
@@ -526,6 +533,7 @@ class WishlistItemUpdateQuantityView(generics.UpdateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+
 class WishlistItemDeleteView(generics.DestroyAPIView):
     serializer_class = WishListItemSerializer
     authentication_classes = [JWTAuthentication]
@@ -536,12 +544,16 @@ class WishlistItemDeleteView(generics.DestroyAPIView):
         product_id = request.query_params.get("product_id")
 
         try:
-            wishlist_item = WishlistItem.objects.get(wishlist__id=wishlist_id, product__id=product_id)
+            wishlist_item = WishlistItem.objects.get(
+                wishlist__id=wishlist_id, product__id=product_id
+            )
             wishlist_item.delete()
             return Response(
-                {"detail": _("Wishlist item deleted.")}, status=status.HTTP_204_NO_CONTENT
+                {"detail": _("Wishlist item deleted.")},
+                status=status.HTTP_204_NO_CONTENT,
             )
         except WishlistItem.DoesNotExist:
             return Response(
-                {"detail": _("Wishlist item not found.")}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("Wishlist item not found.")},
+                status=status.HTTP_404_NOT_FOUND,
             )

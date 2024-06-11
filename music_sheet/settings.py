@@ -266,13 +266,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "user.User"
 
+
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:243",
     "http://localhost:24327",
     "http://localhost:2459",
+    "https://localhost:2459",
     "http://localhost:24530",
+    "https://localhost:24530",
+    "http://admins-score-demo.vercel.app",
+    "https://admins-score-demo.vercel.app",
+    "https://music-score-pi.vercel.app",
 ]
 CORS_ALLOW_ALL_ORIGINS: True
+
+
 CORS_ALLOW_CREDENTIALS: True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 CORS_ALLOW_HEADERS = ["Content-Type", "Authorization"]

@@ -35,7 +35,7 @@ from apps.customer.serializers import CustomerSerializer, CustomerActivationSeri
 
 from music_sheet.pagination import StandardResultsSetPagination
 
-from music_sheet.custom_permissions import CustomerPermission
+from music_sheet.custom_permissions import CustomerPermission, OnlyCustomer
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -109,10 +109,12 @@ class CreateCustomerView(generics.CreateAPIView):
 
 
 class CustomerListView(generics.ListAPIView):
-    queryset = Customer.objects.filter(is_deleted=False, is_customer=True).order_by("-created_at")
+    queryset = Customer.objects.filter(is_deleted=False, is_customer=True).order_by(
+        "-created_at"
+    )
     serializer_class = CustomerSerializer
     authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated, CustomerPermission]
+    permission_classes = [IsAuthenticated, CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name", "name_ar", "mobile_number", "email"]
@@ -140,7 +142,7 @@ class CustomerRetrieve(generics.RetrieveAPIView):
 class ManagerCustomerView(generics.RetrieveUpdateAPIView):
     serializer_class = CustomerSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [OnlyCustomer]
 
     def get_object(self):
         return self.request.user.customer

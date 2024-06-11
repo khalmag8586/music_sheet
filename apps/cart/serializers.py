@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.cart.models import Cart, CartItems,Wishlist,WishlistItem
+from apps.cart.models import Cart, CartItems, Wishlist, WishlistItem
 from apps.product.models import Product
 
 
@@ -23,14 +23,20 @@ class CartItemSerializer(serializers.ModelSerializer):
             "product",
             "added_at",
             "quantity",
+            "purchase_type",
             "sub_total",
         ]
 
     def get_sub_total(self, cartitem: CartItems):
         try:
             quantity = int(cartitem.quantity)
-            sub_total = quantity * cartitem.product.price
+            if cartitem.purchase_type == "pdf":
+                sub_total = quantity * cartitem.product.price_pdf
+            else:
+                sub_total = quantity * cartitem.product.price_sib
             cartitem.sub_total = sub_total
+            cartitem.save(update_fields=["sub_total"])  # Save the sub_total value to the database
+
             return sub_total
         except (ValueError, TypeError):
             return 0  # Handle the case where quantity is not numeric
@@ -74,11 +80,17 @@ class CartSerializer(serializers.ModelSerializer):
     def get_updated_at(self, obj):
         return obj.updated_at.strftime("%Y-%m-%d")
 
+    # def main_total(self, cart: Cart):
+    #     items = cart.items.all()
+    #     grand_total = sum([item.quantity * item.product.price for item in items])
+    #     cart.grand_total = grand_total
+    #     cart.save()
+    #     return grand_total
     def main_total(self, cart: Cart):
         items = cart.items.all()
-        grand_total = sum([item.quantity * item.product.price for item in items])
+        grand_total = sum([item.sub_total for item in items])
         cart.grand_total = grand_total
-        cart.save()
+        cart.save(update_fields=["grand_total"])
         return grand_total
 
     def total(self, cart: Cart):
@@ -87,6 +99,7 @@ class CartSerializer(serializers.ModelSerializer):
         cart.total_quantity = total_quantity
         cart.save()
         return total_quantity
+
 
 class WishListItemSerializer(serializers.ModelSerializer):
     # product = serializers.UUIDField(
@@ -166,4 +179,3 @@ class WishListSerializer(serializers.ModelSerializer):
         wishlist.total_quantity = total_quantity
         wishlist.save()
         return total_quantity
-

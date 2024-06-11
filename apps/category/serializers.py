@@ -85,6 +85,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def get_updated_at(self, obj):
         return obj.updated_at.strftime("%Y-%m-%d")
+
     def get_parent_name(self, obj):
         return obj.parent.name if obj.parent else "NA"
 
@@ -92,18 +93,26 @@ class CategorySerializer(serializers.ModelSerializer):
         return obj.parent.name_ar if obj.parent else "NA"
 
     def create(self, validated_data):
-        uploaded_images_data = validated_data.pop('uploaded_images', None)  # Extract uploaded images data
-        category = Category.objects.create(**validated_data)  # Create the category object
+        uploaded_images_data = validated_data.pop(
+            "uploaded_images", None
+        )  # Extract uploaded images data
+        category = Category.objects.create(
+            **validated_data
+        )  # Create the category object
 
         if uploaded_images_data:
             for image_data in uploaded_images_data:
-                category_image = CategoryImages.objects.create(category=category, image=image_data)  # Set category field
-                category.gallery.add(category_image)  # Associate category image with the category
+                category_image = CategoryImages.objects.create(
+                    category=category, image=image_data
+                )  # Set category field
+                category.gallery.add(
+                    category_image
+                )  # Associate category image with the category
 
         return category
-    def update(self, instance, validated_data):
-        uploaded_images_data = validated_data.pop('uploaded_images', None)
 
+    def update(self, instance, validated_data):
+        uploaded_images_data = validated_data.pop("uploaded_images", None)
 
         # Update instance attributes with validated data
         for attr, value in validated_data.items():
@@ -118,7 +127,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
             # Create new images
             for image_data in uploaded_images_data:
-                category_image = CategoryImages.objects.create(category=instance, image=image_data)
+                category_image = CategoryImages.objects.create(
+                    category=instance, image=image_data
+                )
                 instance.gallery.add(category_image)
 
         return instance
@@ -129,7 +140,7 @@ class NestedCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ("id", "name", "slug", "children")
+        fields = ("id", "name", "name_ar", "slug", "children")
 
     def get_children(self, obj):
         children = Category.objects.filter(parent=obj)

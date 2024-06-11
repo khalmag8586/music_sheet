@@ -1,6 +1,7 @@
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import AnonymousUser
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.permissions import IsAuthenticated
@@ -22,6 +23,7 @@ from apps.product.serializers import (
     ProductDialogSerializer,
     ProductCategoryBulkSerializer,
 )
+from apps.product.filters import ProductFilter
 from music_sheet.pagination import StandardResultsSetPagination
 from music_sheet.custom_permissions import CustomerPermission
 
@@ -161,8 +163,16 @@ class ProductListView(generics.ListAPIView):
     permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = ProductFilter
     search_fields = ["name", "name_ar", "description", "slug"]
-    ordering_fields = ["price", "-price", "name", "-name", "name_ar", "-name_ar"]
+    ordering_fields = [
+        "price_pdf",
+        "-price_pdf",
+        "price_sib",
+        "-price_sib",
+        "name",
+        "-name",
+    ]
 
 
 class DeletedProductListView(generics.ListAPIView):
@@ -172,8 +182,16 @@ class DeletedProductListView(generics.ListAPIView):
     permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = ProductFilter
     search_fields = ["name", "name_ar", "description", "slug"]
-    ordering_fields = ["price", "-price", "name", "-name", "name_ar", "-name_ar"]
+    ordering_fields = [
+        "price_pdf",
+        "-price_pdf",
+        "price_sib",
+        "-price_sib",
+        "name",
+        "-name",
+    ]
 
 
 class ProductByCategoryView(generics.ListAPIView):
@@ -204,14 +222,24 @@ class ProductRetrieveView(generics.RetrieveAPIView):
 
 
 class ProductActiveListView(generics.ListAPIView):
-    queryset = Product.objects.filter(is_active=True, is_deleted=False).order_by("-created_at")
+    queryset = Product.objects.filter(is_active=True, is_deleted=False).order_by(
+        "-created_at"
+    )
     serializer_class = ProductImageOnlySerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [CustomerPermission]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = ProductFilter
     search_fields = ["name", "description", "slug"]
-    ordering_fields = ["price", "-price", "name", "-name"]
+    ordering_fields = [
+        "price_pdf",
+        "-price_pdf",
+        "price_sib",
+        "-price_sib",
+        "name",
+        "-name",
+    ]
 
 
 class ProductActiveRetrieveView(generics.RetrieveAPIView):
@@ -225,11 +253,22 @@ class ProductActiveRetrieveView(generics.RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.increment_views_num(request.user.customer)  # Increment retrieval count
+        user = request.user
+
+        # Check if the user is authenticated and has an associated Customer object
+        if user.is_authenticated and not isinstance(user, AnonymousUser):
+            try:
+                customer = user.customer
+                instance.increment_views_num(customer)
+            except ObjectDoesNotExist:
+                # User is authenticated but not a customer, so just return the product data
+                pass
+        else:
+            # User is not authenticated, so just return the product data
+            pass
+
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
-
-
 class ProductChangeActiveView(generics.UpdateAPIView):
     serializer_class = ProductActiveSerializer
     authentication_classes = [JWTAuthentication]

@@ -4,6 +4,7 @@ from django.db import models
 
 from apps.product.models import Product
 from apps.customer.models import Customer
+from django.utils.translation import gettext_lazy as _
 
 
 class Cart(models.Model):
@@ -23,6 +24,8 @@ class Cart(models.Model):
 
 
 class CartItems(models.Model):
+    PURCHASE_CHOICES = [("pdf", _("PDF")), ("sib", _("SIBELIUS"))]
+
     id = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
@@ -45,8 +48,12 @@ class CartItems(models.Model):
     )
     added_at = models.DateTimeField(auto_now_add=True)
     quantity = models.PositiveBigIntegerField(default=1)
+    purchase_type = models.CharField(
+        max_length=8, choices=PURCHASE_CHOICES, default="pdf"
+    )
     sub_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-
+    class Meta:
+        unique_together = ("cart", "product", "purchase_type")
 
 class Wishlist(models.Model):
     id = models.UUIDField(

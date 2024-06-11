@@ -1,8 +1,7 @@
 from django_filters import FilterSet, BooleanFilter,OrderingFilter
-from apps.category.models import Category
+from apps.product.models import Product
 
-
-class CategoryFilter(FilterSet):
+class ProductFilter(FilterSet):
     ordering = OrderingFilter(
         fields=(
             ("name", "name"),  # Ascending order by name
@@ -11,6 +10,10 @@ class CategoryFilter(FilterSet):
             ('-name_ar',"name_ar_desc"),
             ('created_at',"created_at"),
             ('-created_at',"created_at_desc"),
+            ('price_pdf',"price_pdf"),
+            ('-price_pdf',"price_pdf_desc"),
+            ('price_sib',"price_sib"),
+            ('-price_sib',"price_sib_desc"),
         ),
         field_labels={
             "name": "Name (ascending)",
@@ -18,5 +21,5 @@ class CategoryFilter(FilterSet):
         },
     )
     class Meta:
-        model = Category
+        model = Product
         fields = {"name": ["exact"]}
