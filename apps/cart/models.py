@@ -70,6 +70,8 @@ class Wishlist(models.Model):
 
 
 class WishlistItem(models.Model):
+    PURCHASE_CHOICES = [("pdf", _("PDF")), ("sib", _("SIBELIUS"))]
+
     id = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
@@ -88,4 +90,7 @@ class WishlistItem(models.Model):
     )
     added_at = models.DateTimeField(auto_now_add=True)
     quantity = models.PositiveIntegerField(default=1)
+    purchase_type = models.CharField(
+        max_length=8, choices=PURCHASE_CHOICES, default="pdf"
+    )
     sub_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)

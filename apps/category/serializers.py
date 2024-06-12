@@ -140,7 +140,7 @@ class NestedCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ("id", "name", "name_ar", "slug", "children")
+        fields = ("id", "name", "name_ar", "slug", "image", "children")
 
     def get_children(self, obj):
         children = Category.objects.filter(parent=obj)

@@ -67,19 +67,29 @@ class CartItemCreateView(generics.CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [OnlyCustomer]
 
-    # def get_object(self):
-    #     cart_id = self.request.query_params.get("cart_id")
-    #     cart = get_object_or_404(Cart, id=cart_id)
-    #     return cart
-
     def create(self, request, *args, **kwargs):
-        cart_id = request.query_params.get("cart_id")
+        customer_id = request.user.customer.id
+
         try:
-            cart = Cart.objects.get(id=cart_id)
+            cart = Cart.objects.get(customer=customer_id)
+
         except Cart.DoesNotExist:
+
             return Response(
-                {"detail": _("Cart not found")}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": _("Cart not found"),
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
+
+        # this approach is to pass cart id in params
+        # cart_id = request.query_params.get("cart_id")
+        # try:
+        #     cart = Cart.objects.get(id=cart_id)
+        # except Cart.DoesNotExist:
+        #     return Response(
+        #         {"detail": _("Cart not found")}, status=status.HTTP_404_NOT_FOUND
+        #     )
 
         items = request.data  # Get the list of items from the request data
 
@@ -124,7 +134,10 @@ class CartItemCreateView(generics.CreateAPIView):
 
                 # Create a new cart item with the specified quantity
                 cart_item = CartItems.objects.create(
-                    cart=cart, product=product, quantity=quantity,purchase_type=purchase_type
+                    cart=cart,
+                    product=product,
+                    quantity=quantity,
+                    purchase_type=purchase_type,
                 )
             except CartItems.MultipleObjectsReturned:
                 return Response(
@@ -320,17 +333,24 @@ class WishlistRetrieveView(generics.RetrieveAPIView):
 
 
 class WishlistItemCreateView(generics.CreateAPIView):
+    # Add item to wishlist
     serializer_class = WishListItemSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [OnlyCustomer]
 
     def create(self, request, *args, **kwargs):
-        wishlist_id = request.query_params.get("wishlist_id")
+        customer_id = request.user.customer.id
+
         try:
-            wishlist = Wishlist.objects.get(id=wishlist_id)
+            wishlist = Wishlist.objects.get(customer=customer_id)
+
         except Wishlist.DoesNotExist:
+
             return Response(
-                {"detail": _("Wishlist not found")}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": _("Wishlist not found"),
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         items = request.data  # Get the list of items from the request data
@@ -338,12 +358,15 @@ class WishlistItemCreateView(generics.CreateAPIView):
         for item_data in items:
             product_id = item_data.get("product_id")
             quantity = int(item_data.get("quantity", 1))  # Default quantity to 1
+
             try:
                 wishlist_item = WishlistItem.objects.filter(
-                    wishlist=wishlist, product__id=product_id
+                    wishlist=wishlist,
+                    product__id=product_id,
                 ).first()
                 cart_item = CartItems.objects.filter(
-                    cart__customer=wishlist.customer, product__id=product_id
+                    cart__customer=wishlist.customer,
+                    product__id=product_id,
                 ).first()
 
                 if wishlist_item:
@@ -367,7 +390,9 @@ class WishlistItemCreateView(generics.CreateAPIView):
 
                     # Create a new wishlist item with the specified quantity
                     wishlist_item = WishlistItem.objects.create(
-                        wishlist=wishlist, product=product, quantity=quantity
+                        wishlist=wishlist,
+                        product=product,
+                        quantity=quantity,
                     )
             except WishlistItem.MultipleObjectsReturned:
                 return Response(
@@ -391,45 +416,49 @@ class MoveCartItemToWishlistView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]  # Add your custom permission class if needed
 
     def create(self, request, *args, **kwargs):
-        cart_item_id = request.data.get("cartitem_id")
-        wishlist_id = request.data.get("wishlist_id")
+        customer = request.user.customer
 
+        # Retrieve the cart associated with the logged-in customer
         try:
-            cart_item = CartItems.objects.get(id=cart_item_id)
-        except CartItems.DoesNotExist:
+            cart = Cart.objects.get(customer=customer)
+        except Cart.DoesNotExist:
             return Response(
-                {"detail": _("Cart item not found")},
+                {"detail": _("Cart not found for customer")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        try:
-            wishlist = Wishlist.objects.get(id=wishlist_id)
-        except Wishlist.DoesNotExist:
+        # Retrieve the wishlist associated with the logged-in customer, or create one if it doesn't exist
+        wishlist, created = Wishlist.objects.get_or_create(customer=customer)
+
+        # Move all items from cart to wishlist
+        cart_items = CartItems.objects.filter(cart=cart)
+
+        if not cart_items.exists():
             return Response(
-                {"detail": _("Wishlist not found")},
+                {"detail": _("No items found in cart to move")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Check if the product is already in the wishlist
-        if WishlistItem.objects.filter(
-            wishlist=wishlist, product=cart_item.product
-        ).exists():
-            return Response(
-                {"detail": _("Product already exists in the wishlist")},
-                status=status.HTTP_400_BAD_REQUEST,
+        for cart_item in cart_items:
+            # Check if the product is already in the wishlist
+            if WishlistItem.objects.filter(
+                wishlist=wishlist, product=cart_item.product
+            ).exists():
+                return Response(
+                    {"detail": _("Product already exists in the wishlist")},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Create a new WishlistItem instance
+            WishlistItem.objects.create(
+                wishlist=wishlist,
+                product=cart_item.product,
+                quantity=cart_item.quantity,
             )
 
-        # Create a new WishlistItem instance
-        wishlist_item = WishlistItem.objects.create(
-            wishlist=wishlist,
-            product=cart_item.product,
-            quantity=cart_item.quantity,
-        )
+            # Delete the CartItem instance
+            cart_item.delete()
 
-        # Delete the CartItem instance
-        cart_item.delete()
-
-        serializer = self.get_serializer(wishlist_item)
         return Response(
             {"detail": _("Items moved from cart to wishlist")},
             status=status.HTTP_201_CREATED,
@@ -442,48 +471,51 @@ class MoveWishlistItemToCartView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]  # Add your custom permission class if needed
 
     def create(self, request, *args, **kwargs):
-        wishlist_item_id = request.data.get("wishlistitem_id")
-        cart_id = request.data.get("cart_id")
+        customer = request.user.customer
 
+        # Retrieve the cart associated with the logged-in customer, or create one if it doesn't exist
+        cart, created = Cart.objects.get_or_create(customer=customer)
+
+        # Retrieve the wishlist associated with the logged-in customer
         try:
-            wishlist_item = WishlistItem.objects.get(id=wishlist_item_id)
-        except WishlistItem.DoesNotExist:
+            wishlist = Wishlist.objects.get(customer=customer)
+        except Wishlist.DoesNotExist:
             return Response(
-                {"detail": _("Wishlist item not found")},
+                {"detail": _("Wishlist not found for customer")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        try:
-            cart = Cart.objects.get(id=cart_id)
-        except Cart.DoesNotExist:
+        # Move all items from wishlist to cart
+        wishlist_items = WishlistItem.objects.filter(wishlist=wishlist)
+
+        if not wishlist_items.exists():
             return Response(
-                {"detail": _("Cart not found")},
+                {"detail": _("No items found in wishlist to move")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Check if the product is already in the cart
-        if CartItems.objects.filter(cart=cart, product=wishlist_item.product).exists():
-            return Response(
-                {"detail": _("Product already exists in the cart")},
-                status=status.HTTP_400_BAD_REQUEST,
+        for wishlist_item in wishlist_items:
+            # Check if the product is already in the cart
+            if CartItems.objects.filter(cart=cart, product=wishlist_item.product).exists():
+                return Response(
+                    {"detail": _("Product already exists in the cart")},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Create a new CartItem instance
+            CartItems.objects.create(
+                cart=cart,
+                product=wishlist_item.product,
+                quantity=wishlist_item.quantity,
             )
 
-        # Create a new CartItem instance
-        cart_item = CartItems.objects.create(
-            cart=cart,
-            product=wishlist_item.product,
-            quantity=wishlist_item.quantity,
-        )
+            # Delete the WishlistItem instance
+            wishlist_item.delete()
 
-        # Delete the WishlistItem instance
-        wishlist_item.delete()
-
-        serializer = self.get_serializer(cart_item)
         return Response(
             {"detail": _("Items moved from wishlist to cart")},
             status=status.HTTP_201_CREATED,
         )
-
 
 class WishlistItemUpdateQuantityView(generics.UpdateAPIView):
     queryset = WishlistItem.objects.all()

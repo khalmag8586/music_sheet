@@ -35,7 +35,9 @@ class CartItemSerializer(serializers.ModelSerializer):
             else:
                 sub_total = quantity * cartitem.product.price_sib
             cartitem.sub_total = sub_total
-            cartitem.save(update_fields=["sub_total"])  # Save the sub_total value to the database
+            cartitem.save(
+                update_fields=["sub_total"]
+            )  # Save the sub_total value to the database
 
             return sub_total
         except (ValueError, TypeError):
@@ -121,11 +123,16 @@ class WishListItemSerializer(serializers.ModelSerializer):
     def get_sub_total(self, wishlistitem: WishlistItem):
         try:
             quantity = int(wishlistitem.quantity)
-            sub_total = quantity * wishlistitem.product.price
+            if wishlistitem.purchase_type == "pdf":
+                sub_total = quantity * wishlistitem.product.price_pdf
+            else:
+                sub_total = quantity * wishlistitem.product.price_sib
             wishlistitem.sub_total = sub_total
+            wishlistitem.save(update_fields=["sub_total"])
             return sub_total
         except (ValueError, TypeError):
             return 0  # Handle the case where quantity is not numeric
+
 
     # def to_representation(self, instance):
     #     rep = super().to_representation(instance)
@@ -135,7 +142,6 @@ class WishListItemSerializer(serializers.ModelSerializer):
 
 class WishListSerializer(serializers.ModelSerializer):
     items = WishListItemSerializer(many=True, required=False)
-    grand_total = serializers.SerializerMethodField(method_name="main_total")
     total_quantity = serializers.SerializerMethodField(method_name="total")
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
@@ -151,7 +157,7 @@ class WishListSerializer(serializers.ModelSerializer):
             "customer",
             "customer_name",
             "total_quantity",
-            "grand_total",
+            # "grand_total",
         ]
         read_only_fields = [
             "id",
@@ -166,12 +172,7 @@ class WishListSerializer(serializers.ModelSerializer):
     def get_updated_at(self, obj):
         return obj.updated_at.strftime("%Y-%m-%d")
 
-    def main_total(self, wishlist: Wishlist):
-        items = wishlist.items.all()
-        grand_total = sum([item.quantity * item.product.price for item in items])
-        wishlist.grand_total = grand_total
-        wishlist.save()
-        return grand_total
+
 
     def total(self, wishlist: Wishlist):
         items = wishlist.items.all()
