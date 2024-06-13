@@ -1,6 +1,8 @@
 from apps.category.models import Category, CategoryImages
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -144,9 +146,14 @@ class NestedCategorySerializer(serializers.ModelSerializer):
 
     def get_children(self, obj):
         children = Category.objects.filter(parent=obj)
-        serializer = NestedCategorySerializer(children, many=True)
+        serializer = NestedCategorySerializer(children, many=True, context=self.context)
         return serializer.data
-
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and request:
+            image_url = request.build_absolute_uri(obj.image.url)
+            return image_url
+        return None
 
 class ParentCategorySerializer(serializers.ModelSerializer):
     class Meta:
