@@ -65,6 +65,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "sib_file",
             "midi_file",
             "views_num",
+            "no_of_ratings",
+            "avg_ratings",
         ]
         read_only_fields = [
             "id",
@@ -78,6 +80,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_by_user_name",
             "updated_by_user_name_ar",
             "views_num",
+
         ]
 
     def create(self, validated_data):
@@ -164,6 +167,9 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
             "image",
             "mp3_file",
             "views_num",
+            "no_of_ratings",
+            "avg_ratings",
+
         ]
         read_only_fields = [
             "id",

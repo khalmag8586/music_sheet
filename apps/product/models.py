@@ -17,6 +17,7 @@ from music_sheet.util import unique_slug_generator
 from apps.category.models import Category
 from apps.customer.models import Customer
 from apps.section.models import Section
+from apps.rating.models import Rating
 from django.core.exceptions import ValidationError
 
 
@@ -199,6 +200,20 @@ class Product(models.Model):
             ProductView.objects.create(product=self, customer=customer)
             self.views_num += 1
             self.save(update_fields=["views_num"])
+
+    def no_of_ratings(self):
+        ratings = Rating.objects.filter(product=self)
+        return len(ratings)
+
+    def avg_ratings(self):
+        sum = 0
+        ratings = Rating.objects.filter(product=self)
+        for i in ratings:
+            sum += i.stars
+        if len(ratings) > 0:
+            return sum / len(ratings)
+        else:
+            return 0
 
 
 class ProductView(models.Model):
