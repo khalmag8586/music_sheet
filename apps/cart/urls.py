@@ -12,6 +12,7 @@ from apps.cart.views import (
     # wishList
     WishListCreateView,
     WishListListView,
+    CustomerWishListRetrieveView,
     WishlistRetrieveView,
     WishlistItemCreateView,
     MoveCartItemToWishlistView,
@@ -57,6 +58,11 @@ urlpatterns = [
     path("wishlist_list/", WishListListView.as_view(), name="wishlist-list"),
     path(
         "wishlist_retrieve/", WishlistRetrieveView.as_view(), name="wishlist-retrieve"
+    ),
+    path(
+        "wishlist_by_customer/",
+        CustomerWishListRetrieveView.as_view(),
+        name="retrieve-wishlist-by-customer",
     ),
     path(
         "add_item_to_wishlist/",

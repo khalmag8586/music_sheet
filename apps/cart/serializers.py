@@ -10,10 +10,12 @@ class SimpleProductSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    # product = serializers.UUIDField(
-    #     required=False, write_only=True
-    # )  # Make this field optional
+
     sub_total = serializers.SerializerMethodField()
+    product_name = serializers.CharField(source="product.name")
+    product_name_ar = serializers.CharField(source="product.name_ar")
+    product_image = serializers.ImageField(source="product.image")
+    added_at = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItems
@@ -21,11 +23,17 @@ class CartItemSerializer(serializers.ModelSerializer):
             "id",
             "cart",
             "product",
+            "product_name",
+            "product_name_ar",
+            "product_image",
             "added_at",
             "quantity",
             "purchase_type",
             "sub_total",
         ]
+
+    def get_added_at(self, obj):
+        return obj.added_at.strftime("%Y-%m-%d")
 
     def get_sub_total(self, cartitem: CartItems):
         try:
@@ -43,10 +51,12 @@ class CartItemSerializer(serializers.ModelSerializer):
         except (ValueError, TypeError):
             return 0  # Handle the case where quantity is not numeric
 
-    # def to_representation(self, instance):
-    #     rep = super().to_representation(instance)
-    #     rep["product"] = SimpleProductSerializer(instance.product).data
-    #     return rep
+    # def get_image_url(self, obj):
+    #     request = self.context.get('request')
+    #     if obj.image and request:
+    #         image_url = request.build_absolute_uri(obj.image.url)
+    #         return image_url
+    #     return None
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -104,10 +114,12 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class WishListItemSerializer(serializers.ModelSerializer):
-    # product = serializers.UUIDField(
-    #     required=False, write_only=True
-    # )  # Make this field optional
+
     sub_total = serializers.SerializerMethodField()
+    product_name = serializers.CharField(source="product.name")
+    product_name_ar = serializers.CharField(source="product.name_ar")
+    product_image = serializers.ImageField(source="product.image")
+    added_at = serializers.SerializerMethodField()
 
     class Meta:
         model = WishlistItem
@@ -115,24 +127,50 @@ class WishListItemSerializer(serializers.ModelSerializer):
             "id",
             "wishlist",
             "product",
+            "product_name",
+            "product_name_ar",
+            "product_image",
             "added_at",
             "quantity",
+            "purchase_type",
             "sub_total",
         ]
+
+    def get_added_at(self, obj):
+        return obj.added_at.strftime("%Y-%m-%d")
 
     def get_sub_total(self, wishlistitem: WishlistItem):
         try:
             quantity = int(wishlistitem.quantity)
             if wishlistitem.purchase_type == "pdf":
                 sub_total = quantity * wishlistitem.product.price_pdf
-            else:
+            elif wishlistitem.purchase_type == "sib":
                 sub_total = quantity * wishlistitem.product.price_sib
+            else:
+                return "something wrong"
             wishlistitem.sub_total = sub_total
             wishlistitem.save(update_fields=["sub_total"])
             return sub_total
         except (ValueError, TypeError):
             return 0  # Handle the case where quantity is not numeric
+        """
+        def get_sub_total(self, cartitem: CartItems):
+        try:
+            quantity = int(cartitem.quantity)
+            if cartitem.purchase_type == "pdf":
+                sub_total = quantity * cartitem.product.price_pdf
+            else:
+                sub_total = quantity * cartitem.product.price_sib
+            cartitem.sub_total = sub_total
+            cartitem.save(
+                update_fields=["sub_total"]
+            )  # Save the sub_total value to the database
 
+            return sub_total
+        except (ValueError, TypeError):
+            return 0  # Handle the case where quantity is not numeric
+
+        """
 
     # def to_representation(self, instance):
     #     rep = super().to_representation(instance)
@@ -171,8 +209,6 @@ class WishListSerializer(serializers.ModelSerializer):
 
     def get_updated_at(self, obj):
         return obj.updated_at.strftime("%Y-%m-%d")
-
-
 
     def total(self, wishlist: Wishlist):
         items = wishlist.items.all()

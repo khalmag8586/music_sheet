@@ -2,8 +2,8 @@ from pathlib import Path
 import os
 from datetime import datetime, timedelta
 from django.conf import settings
-import environ
 from django.utils.translation import gettext_lazy as _
+import environ
 
 env = environ.Env()
 environ.Env.read_env()
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.section",
     "apps.cart",
     "apps.rating",
+    "apps.order",
 
 ]
 
@@ -188,6 +189,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "music_sheet.wsgi.application"
+
+
+#payPal Settings
+PAYPAL_CLIENT_ID = env("PAYPAL_CLIENT_ID")
+PAYPAL_CLIENT_SECRET = env("PAYPAL_CLIENT_SECRET")
+PAYPAL_MODE = 'sandbox'  # or 'live' for production
 
 
 # Database

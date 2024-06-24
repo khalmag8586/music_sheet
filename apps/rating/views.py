@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
+from django.db import IntegrityError
 
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -24,9 +25,32 @@ class RatingCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
 
-        return Response({"detail": _("Rating created successfully")})
+        try:
+            self.perform_create(serializer)
+            created_object_id = serializer.instance.id
+
+            return Response(
+                {
+                    "detail": _("Rating created successfully"),
+                    "rating_id": created_object_id,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        except IntegrityError:
+            # Find the existing rating
+            customer = request.user.customer
+            product = serializer.validated_data["product"]
+            existing_rating = Rating.objects.get(created_by=customer, product=product)
+
+            return Response(
+                {
+                    "detail": _("This product has already been rated by you."),
+                    "status": "551",
+                    "rating_id": existing_rating.id,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class RatingListView(generics.ListAPIView):
@@ -39,12 +63,12 @@ class RatingListView(generics.ListAPIView):
 class RatingRetrieveView(generics.RetrieveAPIView):
     serializer_class = RatingSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [CustomerPermission]
+    permission_classes = [OnlyCustomer]
     lookup_field = "id"
 
     def get_object(self):
         rating_id = self.request.query_params.get("rating_id")
-        rating = get_object_or_404(Rating, rating_id=rating_id)
+        rating = get_object_or_404(Rating, id=rating_id)
         return rating
 
 

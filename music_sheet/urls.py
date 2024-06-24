@@ -30,6 +30,7 @@ urlpatterns += i18n_patterns(
     path("api/section/", include("apps.section.urls")),
     path("api/cart/", include("apps.cart.urls")),
     path("api/rating/", include("apps.rating.urls")),
+    path("api/order/", include("apps.order.urls")),
 )
 
 if settings.DEBUG:

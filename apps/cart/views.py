@@ -55,7 +55,8 @@ class CustomerCartRetrieveView(generics.RetrieveAPIView):
     permission_classes = [OnlyCustomer]
 
     def get_object(self):
-        customer_id = self.request.query_params.get("customer_id")
+        # customer_id = self.request.query_params.get("customer_id")
+        customer_id = self.request.user.customer.id
         customer = get_object_or_404(Customer, id=customer_id)
         cart = get_object_or_404(Cart, customer=customer)
         return cart
@@ -94,9 +95,9 @@ class CartItemCreateView(generics.CreateAPIView):
         items = request.data  # Get the list of items from the request data
 
         for item_data in items:
-            product_id = item_data.get("product_id")
+            product_id = item_data.get("product_id", [])
             quantity = int(item_data.get("quantity", 1))  # Default quantity to 1
-            purchase_type = item_data.get("purchase_type", "pdf")  # Default to 'pdf'
+            purchase_type = item_data.get("purchase_type")
 
             try:
                 cart_item = CartItems.objects.filter(
@@ -278,11 +279,26 @@ class CartItemDeleteView(generics.DestroyAPIView):
     permission_classes = [OnlyCustomer]
 
     def destroy(self, request, *args, **kwargs):
-        cart_id = request.query_params.get("cart_id")
-        product_id = request.query_params.get("product_id")
+        # cart_id = request.query_params.get("cart_id")
+        customer_id = request.user.customer.id
+        product_id = request.data.get("product_id")
+        purchase_type = request.data.get("purchase_type")
 
         try:
-            cart_item = CartItems.objects.get(cart__id=cart_id, product__id=product_id)
+            cart = Cart.objects.get(customer=customer_id)
+
+        except Cart.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": _("Cart not found"),
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        try:
+            cart_item = CartItems.objects.get(
+                cart=cart, product__id=product_id, purchase_type=purchase_type
+            )
             cart_item.delete()
             return Response(
                 {"detail": _("Cart item deleted.")}, status=status.HTTP_204_NO_CONTENT
@@ -318,6 +334,19 @@ class WishListListView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [OnlyCustomer]
     pagination_class = StandardResultsSetPagination
+
+
+class CustomerWishListRetrieveView(generics.RetrieveAPIView):
+    serializer_class = WishListSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [OnlyCustomer]
+
+    def get_object(self):
+        # customer_id = self.request.query_params.get("customer_id")
+        customer_id = self.request.user.customer.id
+        customer = get_object_or_404(Customer, id=customer_id)
+        wishlist = get_object_or_404(Wishlist, customer=customer)
+        return wishlist
 
 
 class WishlistRetrieveView(generics.RetrieveAPIView):
@@ -358,11 +387,13 @@ class WishlistItemCreateView(generics.CreateAPIView):
         for item_data in items:
             product_id = item_data.get("product_id")
             quantity = int(item_data.get("quantity", 1))  # Default quantity to 1
+            purchase_type = item_data.get("purchase_type")
 
             try:
                 wishlist_item = WishlistItem.objects.filter(
                     wishlist=wishlist,
                     product__id=product_id,
+                    purchase_type=purchase_type,
                 ).first()
                 cart_item = CartItems.objects.filter(
                     cart__customer=wishlist.customer,
@@ -393,6 +424,7 @@ class WishlistItemCreateView(generics.CreateAPIView):
                         wishlist=wishlist,
                         product=product,
                         quantity=quantity,
+                        purchase_type=purchase_type,
                     )
             except WishlistItem.MultipleObjectsReturned:
                 return Response(
@@ -410,6 +442,62 @@ class WishlistItemCreateView(generics.CreateAPIView):
         )
 
 
+# class MoveCartItemToWishlistView(generics.CreateAPIView):
+##this class can move all items from cart to wishlist
+#     serializer_class = WishListItemSerializer
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]  # Add your custom permission class if needed
+
+#     def create(self, request, *args, **kwargs):
+#         customer = request.user.customer
+
+#         # Retrieve the cart associated with the logged-in customer
+#         try:
+#             cart = Cart.objects.get(customer=customer)
+#         except Cart.DoesNotExist:
+#             return Response(
+#                 {"detail": _("Cart not found for customer")},
+#                 status=status.HTTP_404_NOT_FOUND,
+#             )
+
+#         # Retrieve the wishlist associated with the logged-in customer, or create one if it doesn't exist
+#         wishlist, created = Wishlist.objects.get_or_create(customer=customer)
+
+#         # Move all items from cart to wishlist
+#         cart_items = CartItems.objects.filter(cart=cart)
+
+#         if not cart_items.exists():
+#             return Response(
+#                 {"detail": _("No items found in cart to move")},
+#                 status=status.HTTP_404_NOT_FOUND,
+#             )
+
+#         for cart_item in cart_items:
+#             # Check if the product is already in the wishlist
+#             if WishlistItem.objects.filter(
+#                 wishlist=wishlist, product=cart_item.product
+#             ).exists():
+#                 return Response(
+#                     {"detail": _("Product already exists in the wishlist")},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+
+#             # Create a new WishlistItem instance
+#             WishlistItem.objects.create(
+#                 wishlist=wishlist,
+#                 product=cart_item.product,
+#                 quantity=cart_item.quantity,
+#                 purchase_type=cart_item.purchase_type
+#             )
+
+#             # Delete the CartItem instance
+#             cart_item.delete()
+
+
+#         return Response(
+#             {"detail": _("Items moved from cart to wishlist")},
+#             status=status.HTTP_201_CREATED,
+#         )
 class MoveCartItemToWishlistView(generics.CreateAPIView):
     serializer_class = WishListItemSerializer
     authentication_classes = [JWTAuthentication]
@@ -430,22 +518,48 @@ class MoveCartItemToWishlistView(generics.CreateAPIView):
         # Retrieve the wishlist associated with the logged-in customer, or create one if it doesn't exist
         wishlist, created = Wishlist.objects.get_or_create(customer=customer)
 
-        # Move all items from cart to wishlist
-        cart_items = CartItems.objects.filter(cart=cart)
+        # Retrieve the items to be moved from the request data
+        items_to_move = request.data
 
-        if not cart_items.exists():
+        if not items_to_move:
             return Response(
-                {"detail": _("No items found in cart to move")},
-                status=status.HTTP_404_NOT_FOUND,
+                {"detail": _("No items specified to move")},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        for cart_item in cart_items:
+        moved_items = []
+
+        for item_data in items_to_move:
+            product_id = item_data.get("product_id")
+            quantity = item_data.get("quantity", 1)
+            purchase_type = item_data.get("purchase_type")
+
+            try:
+                cart_item = CartItems.objects.get(
+                    cart=cart, product__id=product_id, purchase_type=purchase_type
+                )
+            except CartItems.DoesNotExist:
+                return Response(
+                    {
+                        "detail": _("Cart item with product ID {0} not found").format(
+                            product_id
+                        )
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
             # Check if the product is already in the wishlist
             if WishlistItem.objects.filter(
-                wishlist=wishlist, product=cart_item.product
+                wishlist=wishlist,
+                product=cart_item.product,
+                purchase_type=purchase_type,
             ).exists():
                 return Response(
-                    {"detail": _("Product already exists in the wishlist")},
+                    {
+                        "detail": _(
+                            "Product {0} already exists in the wishlist"
+                        ).format(cart_item.product.name)
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -454,17 +568,77 @@ class MoveCartItemToWishlistView(generics.CreateAPIView):
                 wishlist=wishlist,
                 product=cart_item.product,
                 quantity=cart_item.quantity,
+                purchase_type=cart_item.purchase_type,
             )
 
             # Delete the CartItem instance
             cart_item.delete()
 
+            moved_items.append(cart_item.product.name)
+
         return Response(
-            {"detail": _("Items moved from cart to wishlist")},
+            {
+                "detail": _("Items moved from cart to wishlist: {0}").format(
+                    ", ".join(moved_items)
+                )
+            },
             status=status.HTTP_201_CREATED,
         )
 
 
+# class MoveWishlistItemToCartView(generics.CreateAPIView):
+#     #this view moves all the items from wishlist to cart
+#     serializer_class = CartItemSerializer
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]  # Add your custom permission class if needed
+
+#     def create(self, request, *args, **kwargs):
+#         customer = request.user.customer
+
+#         # Retrieve the cart associated with the logged-in customer, or create one if it doesn't exist
+#         cart, created = Cart.objects.get_or_create(customer=customer)
+
+#         # Retrieve the wishlist associated with the logged-in customer
+#         try:
+#             wishlist = Wishlist.objects.get(customer=customer)
+#         except Wishlist.DoesNotExist:
+#             return Response(
+#                 {"detail": _("Wishlist not found for customer")},
+#                 status=status.HTTP_404_NOT_FOUND,
+#             )
+
+#         # Move all items from wishlist to cart
+#         wishlist_items = WishlistItem.objects.filter(wishlist=wishlist)
+
+#         if not wishlist_items.exists():
+#             return Response(
+#                 {"detail": _("No items found in wishlist to move")},
+#                 status=status.HTTP_404_NOT_FOUND,
+#             )
+
+#         for wishlist_item in wishlist_items:
+#             # Check if the product is already in the cart
+#             if CartItems.objects.filter(cart=cart, product=wishlist_item.product).exists():
+#                 return Response(
+#                     {"detail": _("Product already exists in the cart")},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+
+#             # Create a new CartItem instance
+#             CartItems.objects.create(
+#                 cart=cart,
+#                 product=wishlist_item.product,
+#                 quantity=wishlist_item.quantity,
+#             )
+
+#             # Delete the WishlistItem instance
+#             wishlist_item.delete()
+
+
+#         return Response(
+#             {"detail": _("Items moved from wishlist to cart")},
+#             status=status.HTTP_201_CREATED,
+#         )
 class MoveWishlistItemToCartView(generics.CreateAPIView):
     serializer_class = CartItemSerializer
     authentication_classes = [JWTAuthentication]
@@ -472,9 +646,6 @@ class MoveWishlistItemToCartView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         customer = request.user.customer
-
-        # Retrieve the cart associated with the logged-in customer, or create one if it doesn't exist
-        cart, created = Cart.objects.get_or_create(customer=customer)
 
         # Retrieve the wishlist associated with the logged-in customer
         try:
@@ -485,20 +656,52 @@ class MoveWishlistItemToCartView(generics.CreateAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Move all items from wishlist to cart
-        wishlist_items = WishlistItem.objects.filter(wishlist=wishlist)
+        # Retrieve the cart associated with the logged-in customer, or create one if it doesn't exist
+        cart, created = Cart.objects.get_or_create(customer=customer)
 
-        if not wishlist_items.exists():
+        # Retrieve the items to be moved from the request data
+        items_to_move = request.data
+
+        if not items_to_move:
             return Response(
-                {"detail": _("No items found in wishlist to move")},
-                status=status.HTTP_404_NOT_FOUND,
+                {"detail": _("No items specified to move")},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        for wishlist_item in wishlist_items:
-            # Check if the product is already in the cart
-            if CartItems.objects.filter(cart=cart, product=wishlist_item.product).exists():
+        moved_items = []
+
+        for item_data in items_to_move:
+            product_id = item_data.get("product_id")
+            quantity = item_data.get("quantity", 1)
+            purchase_type = item_data.get("purchase_type")
+
+            try:
+                wishlist_item = WishlistItem.objects.get(
+                    wishlist=wishlist,
+                    product__id=product_id,
+                    quantity=quantity,
+                    purchase_type=purchase_type,
+                )
+            except WishlistItem.DoesNotExist:
                 return Response(
-                    {"detail": _("Product already exists in the cart")},
+                    {
+                        "detail": _(
+                            "Wishlist item with product ID {0} not found"
+                        ).format(product_id)
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Check if the product is already in the cart
+            if CartItems.objects.filter(
+                cart=cart, product=wishlist_item.product, purchase_type=purchase_type
+            ).exists():
+                return Response(
+                    {
+                        "detail": _("Product {0} already exists in the cart").format(
+                            wishlist_item.product.name
+                        )
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -507,15 +710,23 @@ class MoveWishlistItemToCartView(generics.CreateAPIView):
                 cart=cart,
                 product=wishlist_item.product,
                 quantity=wishlist_item.quantity,
+                purchase_type=wishlist_item.purchase_type,
             )
 
             # Delete the WishlistItem instance
             wishlist_item.delete()
 
+            moved_items.append(wishlist_item.product.name)
+
         return Response(
-            {"detail": _("Items moved from wishlist to cart")},
+            {
+                "detail": _("Items moved from wishlist to cart: {0}").format(
+                    ", ".join(moved_items)
+                )
+            },
             status=status.HTTP_201_CREATED,
         )
+
 
 class WishlistItemUpdateQuantityView(generics.UpdateAPIView):
     queryset = WishlistItem.objects.all()
@@ -572,12 +783,50 @@ class WishlistItemDeleteView(generics.DestroyAPIView):
     permission_classes = [OnlyCustomer]
 
     def destroy(self, request, *args, **kwargs):
-        wishlist_id = request.query_params.get("wishlist_id")
-        product_id = request.query_params.get("product_id")
+        # wishlist_id = request.query_params.get("wishlist_id")
+        customer = request.user.customer
+        product_id = request.data.get("product_id")
+        purchase_type = request.data.get("purchase_type")
+        # Retrieve the wishlist associated with the logged-in customer
+        """
+        try:
+            cart = Cart.objects.get(customer=customer_id)
+
+        except Cart.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": _("Cart not found"),
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        try:
+            cart_item = CartItems.objects.get(
+                cart=cart, product__id=product_id, purchase_type=purchase_type
+            )
+            cart_item.delete()
+            return Response(
+                {"detail": _("Cart item deleted.")}, status=status.HTTP_204_NO_CONTENT
+            )
+        except CartItems.DoesNotExist:
+            return Response(
+                {"detail": _("Cart item not found.")}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        """
+        try:
+            wishlist = Wishlist.objects.get(customer=customer)
+        except Wishlist.DoesNotExist:
+            return Response(
+                {"detail": _("Wishlist not found for customer")},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         try:
             wishlist_item = WishlistItem.objects.get(
-                wishlist__id=wishlist_id, product__id=product_id
+                wishlist=wishlist,
+                product__id=product_id,
+                purchase_type=purchase_type,
             )
             wishlist_item.delete()
             return Response(

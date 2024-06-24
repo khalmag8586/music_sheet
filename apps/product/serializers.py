@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.product.models import Product
 from apps.category.models import Category
+from apps.rating.models import Rating
 from apps.category.serializers import CategorySerializer
 
 
@@ -12,6 +13,29 @@ class CategorySimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["id", "name", "name_ar", "slug"]
+
+
+class RatingSimpleSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(source="created_by.name")
+    created_by_name_ar = serializers.CharField(source="created_by.name_ar")
+    created_at=serializers.SerializerMethodField()
+    updated_at=serializers.SerializerMethodField()
+    class Meta:
+        model = Rating
+        fields = [
+            "id",
+            "stars",
+            "comment",
+            "created_at",
+            "updated_at",
+            "created_by_name",
+            "created_by_name_ar",
+        ]
+    def get_created_at(self, obj):
+        return obj.created_at.strftime("%Y-%m-%d")
+
+    def get_updated_at(self, obj):
+        return obj.updated_at.strftime("%Y-%m-%d")
 
 
 # Product serializers
@@ -36,6 +60,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category = serializers.ListField(
         child=serializers.UUIDField(), write_only=True, required=False
     )
+    ratings=serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -67,6 +92,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "views_num",
             "no_of_ratings",
             "avg_ratings",
+            "ratings",
+
         ]
         read_only_fields = [
             "id",
@@ -80,7 +107,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_by_user_name",
             "updated_by_user_name_ar",
             "views_num",
-
         ]
 
     def create(self, validated_data):
@@ -123,7 +149,9 @@ class ProductSerializer(serializers.ModelSerializer):
         ).data
         representation["category"] = categories_data
         return representation
-
+    def get_ratings(self, obj):
+        ratings = obj.ratings.all()  # This uses the reverse relationship
+        return RatingSimpleSerializer(ratings, many=True).data
 
 class ProductImageOnlySerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.CharField(
@@ -143,6 +171,7 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
     category = serializers.ListField(
         child=serializers.UUIDField(), write_only=True, required=False
     )
+    ratings = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -169,7 +198,7 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
             "views_num",
             "no_of_ratings",
             "avg_ratings",
-
+            "ratings",
         ]
         read_only_fields = [
             "id",
@@ -225,6 +254,10 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
         ).data
         representation["category"] = categories_data
         return representation
+
+    def get_ratings(self, obj):
+        ratings = obj.ratings.all()  # This uses the reverse relationship
+        return RatingSimpleSerializer(ratings, many=True).data
 
 
 class ProductActiveSerializer(serializers.ModelSerializer):
