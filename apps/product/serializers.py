@@ -18,8 +18,9 @@ class CategorySimpleSerializer(serializers.ModelSerializer):
 class RatingSimpleSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source="created_by.name")
     created_by_name_ar = serializers.CharField(source="created_by.name_ar")
-    created_at=serializers.SerializerMethodField()
-    updated_at=serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+
     class Meta:
         model = Rating
         fields = [
@@ -31,6 +32,7 @@ class RatingSimpleSerializer(serializers.ModelSerializer):
             "created_by_name",
             "created_by_name_ar",
         ]
+
     def get_created_at(self, obj):
         return obj.created_at.strftime("%Y-%m-%d")
 
@@ -60,7 +62,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category = serializers.ListField(
         child=serializers.UUIDField(), write_only=True, required=False
     )
-    ratings=serializers.SerializerMethodField()
+    ratings = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -85,6 +87,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_by_user_name_ar",
             "is_active",
             "image",
+            "note_image",
             "pdf_file",
             "mp3_file",
             "sib_file",
@@ -93,7 +96,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "no_of_ratings",
             "avg_ratings",
             "ratings",
-
         ]
         read_only_fields = [
             "id",
@@ -149,9 +151,11 @@ class ProductSerializer(serializers.ModelSerializer):
         ).data
         representation["category"] = categories_data
         return representation
+
     def get_ratings(self, obj):
         ratings = obj.ratings.all()  # This uses the reverse relationship
         return RatingSimpleSerializer(ratings, many=True).data
+
 
 class ProductImageOnlySerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.CharField(
@@ -194,6 +198,7 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
             "updated_by_user_name_ar",
             "is_active",
             "image",
+            "note_image",
             "mp3_file",
             "views_num",
             "no_of_ratings",

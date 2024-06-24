@@ -123,6 +123,7 @@ class Product(models.Model):
         null=True,
     )
     image = models.ImageField(blank=True, null=True, upload_to=product_image_file_path)
+    note_image = models.ImageField(blank=True, null=True, upload_to=product_image_file_path)
     pdf_file = models.FileField(
         blank=True,
         null=True,
