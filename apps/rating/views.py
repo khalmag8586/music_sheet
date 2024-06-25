@@ -80,7 +80,7 @@ class RatingUpdateView(generics.UpdateAPIView):
 
     def get_object(self):
         rating_id = self.request.query_params.get("rating_id")
-        rating = get_object_or_404(Rating, rating_id=rating_id)
+        rating = get_object_or_404(Rating, id=rating_id)
         return rating
 
     def perform_update(self, serializer):
@@ -100,12 +100,12 @@ class RatingUpdateView(generics.UpdateAPIView):
 
 class RatingDeleteView(generics.DestroyAPIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [OnlyCustomer]
+    permission_classes = [CustomerPermission]
 
     def delete(self, request, *args, **kwargs):
         rating_ids = request.data.get("rating_id", [])
         for rating_id in rating_ids:
-            instance = get_object_or_404(Rating, rating_id=rating_id)
+            instance = get_object_or_404(Rating, id=rating_id)
             instance.delete()
         return Response({"detail": _("Rating deleted successfully")})
 
