@@ -153,7 +153,7 @@ class ProductSerializer(serializers.ModelSerializer):
         return representation
 
     def get_ratings(self, obj):
-        ratings = obj.ratings.all()  # This uses the reverse relationship
+        ratings = obj.ratings.all().order_by('-created_at')  # This uses the reverse relationship
         return RatingSimpleSerializer(ratings, many=True).data
 
 
@@ -261,7 +261,7 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
         return representation
 
     def get_ratings(self, obj):
-        ratings = obj.ratings.all()  # This uses the reverse relationship
+        ratings = obj.ratings.all().order_by('-created_at')  # This uses the reverse relationship
         return RatingSimpleSerializer(ratings, many=True).data
 
 

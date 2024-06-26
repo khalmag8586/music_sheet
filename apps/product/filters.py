@@ -14,10 +14,14 @@ class ProductFilter(FilterSet):
             ('-price_pdf',"price_pdf_desc"),
             ('price_sib',"price_sib"),
             ('-price_sib',"price_sib_desc"),
+            ('avg_ratings',"avg_ratings"),
+            ('-avg_ratings',"avg_ratings_desc"),
         ),
         field_labels={
             "name": "Name (ascending)",
             "name_desc": "Name (descending)",
+            "avg_ratings": "Average Ratings (ascending)",
+            "avg_ratings_desc": "Average Ratings (descending)",
         },
     )
     class Meta:

@@ -2,6 +2,8 @@ from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import AnonymousUser
+from django.db.models import Avg
+
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.permissions import IsAuthenticated
@@ -173,6 +175,10 @@ class ProductListView(generics.ListAPIView):
         "name",
         "-name",
     ]
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(avg_ratings=Avg('ratings__stars'))
+        return queryset
 
 
 class DeletedProductListView(generics.ListAPIView):
@@ -240,7 +246,10 @@ class ProductActiveListView(generics.ListAPIView):
         "name",
         "-name",
     ]
-
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(avg_ratings=Avg('ratings__stars'))
+        return queryset
 
 class ProductActiveRetrieveView(generics.RetrieveAPIView):
     serializer_class = ProductImageOnlySerializer
