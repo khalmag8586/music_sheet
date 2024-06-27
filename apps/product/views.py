@@ -175,9 +175,10 @@ class ProductListView(generics.ListAPIView):
         "name",
         "-name",
     ]
+
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.annotate(avg_ratings=Avg('ratings__stars'))
+        queryset = queryset.annotate(avg_ratings=Avg("ratings__stars"))
         return queryset
 
 
@@ -237,7 +238,7 @@ class ProductActiveListView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
-    search_fields = ["name", "description", "slug"]
+    search_fields = ["name", "description", "slug", "name_ar"]
     ordering_fields = [
         "price_pdf",
         "-price_pdf",
@@ -246,10 +247,12 @@ class ProductActiveListView(generics.ListAPIView):
         "name",
         "-name",
     ]
+
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.annotate(avg_ratings=Avg('ratings__stars'))
+        queryset = queryset.annotate(avg_ratings=Avg("ratings__stars"))
         return queryset
+
 
 class ProductActiveRetrieveView(generics.RetrieveAPIView):
     serializer_class = ProductImageOnlySerializer
@@ -278,6 +281,8 @@ class ProductActiveRetrieveView(generics.RetrieveAPIView):
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+
 class ProductChangeActiveView(generics.UpdateAPIView):
     serializer_class = ProductActiveSerializer
     authentication_classes = [JWTAuthentication]

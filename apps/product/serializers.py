@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from base64 import b64encode
+
+
 from django.utils.translation import gettext_lazy as _
 
 from apps.product.models import Product
@@ -153,7 +156,9 @@ class ProductSerializer(serializers.ModelSerializer):
         return representation
 
     def get_ratings(self, obj):
-        ratings = obj.ratings.all().order_by('-created_at')  # This uses the reverse relationship
+        ratings = obj.ratings.all().order_by(
+            "-created_at"
+        )  # This uses the reverse relationship
         return RatingSimpleSerializer(ratings, many=True).data
 
 
@@ -176,6 +181,7 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
         child=serializers.UUIDField(), write_only=True, required=False
     )
     ratings = serializers.SerializerMethodField()
+    pdf_file = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -200,6 +206,7 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
             "image",
             "note_image",
             "mp3_file",
+            "pdf_file",
             "views_num",
             "no_of_ratings",
             "avg_ratings",
@@ -245,6 +252,13 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
 
         return instance
 
+    def get_pdf_file(self, obj):
+        # Return the pdf_file only if price_pdf is zero
+        if obj.price_pdf == 0.00:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.pdf_file.url)
+        return None
+
     def get_created_at(self, obj):
         return obj.created_at.strftime("%Y-%m-%d")
 
@@ -261,7 +275,9 @@ class ProductImageOnlySerializer(serializers.ModelSerializer):
         return representation
 
     def get_ratings(self, obj):
-        ratings = obj.ratings.all().order_by('-created_at')  # This uses the reverse relationship
+        ratings = obj.ratings.all().order_by(
+            "-created_at"
+        )  # This uses the reverse relationship
         return RatingSimpleSerializer(ratings, many=True).data
 
 
