@@ -63,8 +63,8 @@ class SectionListView(generics.ListAPIView):
 
 class SectionRetrieveView(generics.RetrieveAPIView):
     serializer_class = SectionSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [CustomerPermission]
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [CustomerPermission]
     lookup_field = "slug"
 
     def get_object(self):
