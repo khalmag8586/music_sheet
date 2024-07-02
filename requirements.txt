@@ -7,3 +7,4 @@ python-dateutil==2.8.2
 django-environ==0.11.2
 djoser==2.2.0
 psycopg2==2.9.9
+paypalrestsdk

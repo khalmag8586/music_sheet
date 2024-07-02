@@ -195,7 +195,7 @@ WSGI_APPLICATION = "music_sheet.wsgi.application"
 PAYPAL_CLIENT_ID = env("PAYPAL_CLIENT_ID")
 PAYPAL_CLIENT_SECRET = env("PAYPAL_CLIENT_SECRET")
 PAYPAL_MODE = 'sandbox'  # or 'live' for production
-
+PAYPAL_BASE_URL=env('PAYPAL_BASE_URL')
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
