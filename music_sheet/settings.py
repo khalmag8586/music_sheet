@@ -61,13 +61,15 @@ EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL = 'admin@example.com'  # Default from email
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.example.com'  # Your email host
-# EMAIL_PORT = 587  # Your email port
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@example.com'  # Your email host user
-# EMAIL_HOST_PASSWORD = 'your-email-password'  # Your email host password
-# DEFAULT_FROM_EMAIL = 'your-email@example.com'  # Default from email
+# # email settings for production
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = 'khalmagback.xyz'
+# EMAIL_PORT = 465
+# EMAIL_HOST_USER = "info@khalmagback.xyz"
+# EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+# # EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = True
+# DEFAULT_FROM_EMAIL = 'info@khalmagback.xyz'
 
 
 LOGGING = {

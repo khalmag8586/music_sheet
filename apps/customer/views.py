@@ -25,10 +25,11 @@ from rest_framework.parsers import JSONParser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
-import secrets
 import logging
 import json
 
+import string
+import random
 
 from apps.customer.models import Customer
 from apps.customer.serializers import CustomerSerializer, CustomerActivationSerializer
@@ -201,7 +202,6 @@ logger = logging.getLogger(__name__)
 @csrf_exempt
 def forgot_password(request):
     if request.method == "POST":
-
         try:
             data = json.loads(request.body)  # Parse the JSON request body
             email = data.get("email")
@@ -213,7 +213,27 @@ def forgot_password(request):
             customer = get_object_or_404(Customer, email=email)
 
             # Generate a new password
-            new_password = secrets.token_hex(8)  # Generate an 8-character password
+            def generate_password(length=8):
+                lowercase_chars = string.ascii_lowercase
+                uppercase_chars = string.ascii_uppercase
+                digit_chars = string.digits
+
+                password = [
+                    random.choice(lowercase_chars),
+                    random.choice(uppercase_chars),
+                    random.choice(digit_chars),
+                ]
+
+                for _ in range(length - 3):
+                    password.append(
+                        random.choice(lowercase_chars + uppercase_chars + digit_chars)
+                    )
+
+                random.shuffle(password)
+
+                return "".join(password)
+
+            new_password = generate_password(8)
 
             # Update user's password
             customer.set_password(new_password)
