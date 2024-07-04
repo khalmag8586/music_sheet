@@ -62,6 +62,99 @@ class CustomerCartRetrieveView(generics.RetrieveAPIView):
         return cart
 
 
+# class CartItemCreateView(generics.CreateAPIView):
+#     # Add item to cart
+#     serializer_class = CartItemSerializer
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [OnlyCustomer]
+
+#     def create(self, request, *args, **kwargs):
+#         customer_id = request.user.customer.id
+
+#         try:
+#             cart = Cart.objects.get(customer=customer_id)
+
+#         except Cart.DoesNotExist:
+
+#             return Response(
+#                 {
+#                     "detail": _("Cart not found"),
+#                 },
+#                 status=status.HTTP_404_NOT_FOUND,
+#             )
+
+#         # this approach is to pass cart id in params
+#         # cart_id = request.query_params.get("cart_id")
+#         # try:
+#         #     cart = Cart.objects.get(id=cart_id)
+#         # except Cart.DoesNotExist:
+#         #     return Response(
+#         #         {"detail": _("Cart not found")}, status=status.HTTP_404_NOT_FOUND
+#         #     )
+
+#         items = request.data  # Get the list of items from the request data
+
+#         for item_data in items:
+#             product_id = item_data.get("product_id", [])
+#             quantity = int(item_data.get("quantity", 1))  # Default quantity to 1
+#             purchase_type = item_data.get("purchase_type")
+
+#             try:
+#                 cart_item = CartItems.objects.filter(
+#                     cart=cart, product__id=product_id, purchase_type=purchase_type
+#                 ).first()
+#                 if cart_item:
+#                     # # If the product is already in the cart, update the quantity
+#                     # cart_item.quantity += quantity
+#                     # cart_item.save()
+#                     # cart_item_serializer = self.get_serializer(
+#                     #     cart_item
+#                     # )  # Use the existing cart item for serialization
+#                     return Response(
+#                         {"detail": _("Product already exists in the cart")},
+#                         status=status.HTTP_400_BAD_REQUEST,
+#                     )
+#                 else:
+#                     try:
+#                         product = Product.objects.get(id=product_id)
+#                     except Product.DoesNotExist:
+#                         return Response(
+#                             {"detail": _("Product not found")},
+#                             status=status.HTTP_404_NOT_FOUND,
+#                         )
+#                     # Check if the requested quantity is larger than the available inventory
+#                     # if quantity > product.inventory:
+#                     #     return Response(
+#                     #         {
+#                     #             "message": _(
+#                     #                 "Requested quantity is larger than available inventory"
+#                     #             )
+#                     #         },
+#                     #         status=status.HTTP_400_BAD_REQUEST,
+#                     #     )
+
+#                 # Create a new cart item with the specified quantity
+#                 cart_item = CartItems.objects.create(
+#                     cart=cart,
+#                     product=product,
+#                     quantity=quantity,
+#                     purchase_type=purchase_type,
+#                 )
+#             except CartItems.MultipleObjectsReturned:
+#                 return Response(
+#                     {
+#                         "detail": _(
+#                             "Multiple cart items found for the same product. Contact support."
+#                         )
+#                     },
+#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                 )
+
+#         return Response(
+#             {"detail": _("Items added to cart successfully")},
+#             status=status.HTTP_201_CREATED,
+#         )
+
 class CartItemCreateView(generics.CreateAPIView):
     # Add item to cart
     serializer_class = CartItemSerializer
@@ -82,15 +175,6 @@ class CartItemCreateView(generics.CreateAPIView):
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        # this approach is to pass cart id in params
-        # cart_id = request.query_params.get("cart_id")
-        # try:
-        #     cart = Cart.objects.get(id=cart_id)
-        # except Cart.DoesNotExist:
-        #     return Response(
-        #         {"detail": _("Cart not found")}, status=status.HTTP_404_NOT_FOUND
-        #     )
 
         items = request.data  # Get the list of items from the request data
 
@@ -122,6 +206,21 @@ class CartItemCreateView(generics.CreateAPIView):
                             {"detail": _("Product not found")},
                             status=status.HTTP_404_NOT_FOUND,
                         )
+
+                    # Check if the product has the required files based on the purchase type
+                    if purchase_type == "pdf":
+                        if not product.pdf_file:
+                            return Response(
+                                {"detail": _("PDF file is not available for this product")},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                    elif purchase_type == "sib":
+                        if not product.sib_file:
+                            return Response(
+                                {"detail": _("SIB file is not available for this product")},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+
                     # Check if the requested quantity is larger than the available inventory
                     # if quantity > product.inventory:
                     #     return Response(
@@ -154,8 +253,6 @@ class CartItemCreateView(generics.CreateAPIView):
             {"detail": _("Items added to cart successfully")},
             status=status.HTTP_201_CREATED,
         )
-
-
 class CartRetrieveView(generics.RetrieveAPIView):
     queryset = Cart.objects.all()
     serializer_class = CartSerializer

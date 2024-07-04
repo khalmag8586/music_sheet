@@ -69,6 +69,8 @@ class OrderSerializer(serializers.ModelSerializer):
     updated_by_name_ar = serializers.CharField(
         source="updated_by.name_ar", read_only=True
     )
+    customer_phone = serializers.CharField(source="created_by.mobile_number")
+    customer_email = serializers.CharField(source="created_by.email")
 
     class Meta:
         model = Order
@@ -84,6 +86,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "created_by",
             "created_by_name",
             "created_by_name_ar",
+            "customer_phone",
+            "customer_email",
             "updated_by",
             "updated_by_name",
             "updated_by_name_ar",

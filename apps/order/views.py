@@ -235,7 +235,7 @@ class OrderCreateView(generics.CreateAPIView):
 
 
 class OrderListView(generics.ListAPIView):
-    queryset = Order.objects.all()
+    queryset = Order.objects.all().order_by("-created_at")
     serializer_class = OrderSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomerPermission]
